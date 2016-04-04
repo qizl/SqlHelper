@@ -1,0 +1,14 @@
+E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\SQLServerDAL\obj\Debug\SQLServerDAL.csprojResolveAssemblyReference.cache
+E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\SQLServerDAL\bin\Debug\SQLServerDAL.dll
+E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\SQLServerDAL\bin\Debug\SQLServerDAL.pdb
+E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\SQLServerDAL\bin\Debug\Model.dll
+E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\SQLServerDAL\bin\Debug\Model.pdb
+E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\SQLServerDAL\obj\Debug\SQLServerDAL.dll
+E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\SQLServerDAL\obj\Debug\SQLServerDAL.pdb
+E:\PL\MyProjects\GitHub\SQLServerDAL\SQLServerDAL\SQLServerDAL\bin\Debug\SQLServerDAL.dll
+E:\PL\MyProjects\GitHub\SQLServerDAL\SQLServerDAL\SQLServerDAL\bin\Debug\SQLServerDAL.pdb
+E:\PL\MyProjects\GitHub\SQLServerDAL\SQLServerDAL\SQLServerDAL\bin\Debug\Model.dll
+E:\PL\MyProjects\GitHub\SQLServerDAL\SQLServerDAL\SQLServerDAL\bin\Debug\Model.pdb
+E:\PL\MyProjects\GitHub\SQLServerDAL\SQLServerDAL\SQLServerDAL\obj\Debug\SQLServerDAL.csprojResolveAssemblyReference.cache
+E:\PL\MyProjects\GitHub\SQLServerDAL\SQLServerDAL\SQLServerDAL\obj\Debug\SQLServerDAL.dll
+E:\PL\MyProjects\GitHub\SQLServerDAL\SQLServerDAL\SQLServerDAL\obj\Debug\SQLServerDAL.pdb
