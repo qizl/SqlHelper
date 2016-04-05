@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.25123.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlHelper.Client", "SqlHelper.Client\SqlHelper.Client.csproj", "{2A1E9AA1-CB3F-42C9-AA72-B20D8981D066}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlHelper", "SqlHelper\SqlHelper.csproj", "{8ED89855-B132-4C98-A829-5F90A70CD4D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Model", "Model\Model.csproj", "{D44FFCAD-03DC-4E08-9600-8ADC738F9109}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A1E9AA1-CB3F-42C9-AA72-B20D8981D066}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A1E9AA1-CB3F-42C9-AA72-B20D8981D066}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A1E9AA1-CB3F-42C9-AA72-B20D8981D066}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A1E9AA1-CB3F-42C9-AA72-B20D8981D066}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ED89855-B132-4C98-A829-5F90A70CD4D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ED89855-B132-4C98-A829-5F90A70CD4D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ED89855-B132-4C98-A829-5F90A70CD4D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ED89855-B132-4C98-A829-5F90A70CD4D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D44FFCAD-03DC-4E08-9600-8ADC738F9109}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D44FFCAD-03DC-4E08-9600-8ADC738F9109}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D44FFCAD-03DC-4E08-9600-8ADC738F9109}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D44FFCAD-03DC-4E08-9600-8ADC738F9109}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

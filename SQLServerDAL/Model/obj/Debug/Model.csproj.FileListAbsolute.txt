@@ -1,5 +1,0 @@
-E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\Model\bin\Debug\Model.dll
-E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\Model\bin\Debug\Model.pdb
-E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\Model\obj\Debug\Model.csprojResolveAssemblyReference.cache
-E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\Model\obj\Debug\Model.dll
-E:\PL\MyProjects\SVN\SQLServerDAL\trunk\src\SQLServerDAL\Model\obj\Debug\Model.pdb
