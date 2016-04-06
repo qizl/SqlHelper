@@ -144,5 +144,14 @@ namespace Com.EnjoyCodes.SqlHelper
 
             return obj == null ? 0 : Convert.ToInt32(obj);
         }
+
+        public bool IsExists(string sqlTableName, string sqlWhere = "")
+        {
+            string sqlStr = @"SELECT COUNT(*) FROM " + sqlTableName + (string.IsNullOrEmpty(sqlWhere) ? "" : (" " + sqlWhere));
+            bool b = false;
+            try { b = SqlHelper.IsExists(SqlHelper.GetConnectionString_RW(this.GetType()), sqlStr); }
+            catch { }
+            return b;
+        }
     }
 }

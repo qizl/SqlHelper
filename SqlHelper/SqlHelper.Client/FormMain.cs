@@ -39,18 +39,21 @@ namespace Com.EnjoyCodes.SqlHelper.Client
             //int r = this._fileDAL.Delete(fileTerm.ID);
 
             // 2.查询数据集 - DataSet
-            DataSet dataSet = this._fileDAL.Get("SELECT TOP 100 * FROM FILETERMS ORDER BY CREATETIME DESC");
-            StringBuilder sb = new StringBuilder();
-            foreach (DataRow row in dataSet.Tables[0].Rows)
-                sb.Append(row["ID"] + "," + row["Title"] + "," + row["CreateTime"] + Environment.NewLine);
-            Debug.WriteLine(sb.ToString());
+            //DataSet dataSet = this._fileDAL.Get("SELECT TOP 100 * FROM FILETERMS ORDER BY CREATETIME DESC");
+            //StringBuilder sb = new StringBuilder();
+            //foreach (DataRow row in dataSet.Tables[0].Rows)
+            //    sb.Append(row["ID"] + "," + row["Title"] + "," + row["CreateTime"] + Environment.NewLine);
+            //Debug.WriteLine(sb.ToString());
 
             // 3.查询数据集
-            //var fileTerms = this._fileDAL.Get(10);
-            var fileTerms = this._fileDAL.Get(1, 9, string.Empty, "ID");
+            ////var fileTerms = this._fileDAL.Get(10);
+            //var fileTerms = this._fileDAL.Get(1, 9, string.Empty, "ID");
 
             // 4.查询表行数
-            int count = this._fileDAL.Count();
+            //int count = this._fileDAL.Count();
+
+            // 5.查询是否存在数据
+            bool b = this._fileDAL.IsExists("t");
         }
     }
 }

@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                    case "Com.EnjoyCodes.SqlHelper":
-                    default: key = "MSSQLConnectionString"; break;
+                        case "Com.EnjoyCodes.SqlHelper":
+                        default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -231,6 +231,12 @@ namespace Com.EnjoyCodes.SqlHelper
             cmd.Parameters.Clear();
             return retval;
         }
+
+        public static bool IsExists(string connectionString, string commandText)
+        { return Convert.ToInt32(ExecuteScalar(connectionString, CommandType.Text, commandText, null)) != 0; }
+
+        public static bool IsExists(string connectionString, string commandText, params SqlParameter[] commandParameters)
+        { return Convert.ToInt32(ExecuteScalar(connectionString, CommandType.Text, commandText, commandParameters)) != 0; }
         #endregion
     }
 

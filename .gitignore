@@ -41,3 +41,27 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+*.o
+*.lo
+*.la
+*.al
+.libs
+*.so
+*.so.
+[0-9]*
+*.a
+*.pyc
+*.pyo
+*.rej
+*.swp
+.DS_Store
+bin/
+*.dll
+Debug/
+obj/
+*.db
+packages
+*.suo
+*.dll
+*.pdb
