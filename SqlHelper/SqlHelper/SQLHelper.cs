@@ -337,8 +337,9 @@ namespace Com.EnjoyCodes.SqlHelper
         {
             PropertyInfo[] properties = typeof(T).GetProperties();
             foreach (var item in properties)
-                if (dr[item.Name] != null)
-                    item.SetValue(obj, convertObject(dr[item.Name], item.PropertyType), null);
+                try
+                { if (dr[item.Name] != null) item.SetValue(obj, convertObject(dr[item.Name], item.PropertyType), null); }
+                catch { }
         }
 
         /// <summary>
