@@ -49,7 +49,30 @@ namespace Com.EnjoyCodes.SqlHelper
         /// 查询数据集
         ///     分页方法
         /// </summary>
-        /// <param name="startIndex">起始索引，从1开始</param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="sqlWhere"></param>
+        /// <param name="sqlOrderBy"></param>
+        /// <returns></returns>
+        public Pager<FileTerm> GetPaging(int pageNumber, int pageSize, string sqlWhere, string sqlOrderBy)
+        {
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.Append("SELECT COUNT(1) FROM FILETERMS ");
+            sqlStr.Append(string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere));
+            sqlStr.AppendFormat("SELECT * FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, * FROM FILETERMS) F WHERE F.ROWINDEX BETWEEN {2} AND {3}", pageNumber * pageSize, string.IsNullOrEmpty(sqlOrderBy.Trim()) ? "ID" : sqlOrderBy, (pageNumber - 1) * pageSize + 1, pageNumber * pageSize);
+
+            Pager<FileTerm> result = SqlHelper<FileTerm>.ReadPaging(SqlHelper.GetConnectionString_RW(base.GetType()), CommandType.Text, sqlStr.ToString());
+            result.PageNumber = pageNumber;
+            result.PageSize = pageSize;
+
+            return result;
+        }
+
+        /// <summary>
+        /// 查询数据集
+        ///     指定索引
+        /// </summary>
+        /// <param name="startIndex">起始索引，从0开始</param>
         /// <param name="endIndex"></param>
         /// <param name="sqlWhere"></param>
         /// <param name="sqlOrderBy"></param>
@@ -68,7 +91,7 @@ namespace Com.EnjoyCodes.SqlHelper
             if (!string.IsNullOrEmpty(sqlWhere.Trim()))
                 sqlStr.Append("WHERE " + sqlWhere);
             sqlStr.Append(") T1 ");
-            sqlStr.AppendFormat("WHERE T1.ROW BETWEEN {0} AND {1}", startIndex, endIndex);
+            sqlStr.AppendFormat("WHERE T1.ROW BETWEEN {0} AND {1}", startIndex + 1, endIndex);
 
             return SqlHelper<FileTerm>.ReadList(SqlHelper.GetConnectionString_RW(base.GetType()), CommandType.Text, sqlStr.ToString());
         }
