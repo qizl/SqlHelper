@@ -361,7 +361,6 @@ namespace Com.EnjoyCodes.SqlHelper
                         sdr.Close();
                         sdr.Dispose();
                     }
-                    cmd.Parameters.Clear();
                     cn.Close();
                     cn.Dispose();
                 }
