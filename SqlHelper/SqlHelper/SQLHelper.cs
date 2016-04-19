@@ -374,6 +374,48 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
+        public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        {
+            Pager<T> result = new Pager<T>();
+            using (SqlConnection cn = new SqlConnection(connectionString))
+            {
+                SqlCommand cmd = cn.CreateCommand();
+                cmd.CommandText = commandText;
+                cmd.CommandType = commandType;
+                if (commandParameters != null)
+                    cmd.Parameters.AddRange(commandParameters);
+                try
+                {
+                    cn.Open();
+                    using (SqlDataReader sdr = cmd.ExecuteReader())
+                    {
+                        if (sdr.Read())
+                        {
+                            result.RecordCount = sdr.GetInt32(0);
+                            if (sdr.NextResult())
+                                while (sdr.Read())
+                                {
+                                    var obj = Activator.CreateInstance<T>();
+                                    fill(obj, sdr);
+                                    result.Datas.Add(obj);
+                                }
+                        }
+                        sdr.Close();
+                        sdr.Dispose();
+                    }
+                    cn.Close();
+                    cn.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    cn.Close();
+                    cn.Dispose();
+                    throw ex;
+                }
+            }
+            return result;
+        }
+
         private static void fill(T obj, IDataReader dr)
         {
             PropertyInfo[] properties = typeof(T).GetProperties();
