@@ -14,7 +14,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         private FileDAL _fileDAL = new FileDAL();
 
         [TestMethod]
-        public void TestCRUD()
+        public void CRUD()
         {
             // 1.增删改
             var fileTerm = new FileTerm()
@@ -74,7 +74,15 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         }
 
         [TestMethod]
-        public void TestGetPaging()
+        public void AddIdentityData()
+        { this._fileDAL.Add(new TIdentity() { Name = "test", CreateTime = DateTime.Now }); }
+
+        [TestMethod]
+        public void GetPaging()
         { var fileTerms = this._fileDAL.GetPaging(2, 100, string.Empty, "CREATETIME DESC"); }
+
+        [TestMethod]
+        public void Update()
+        { this._fileDAL.Update(new TIdentity() { ID = 5, Name = "test update", CreateTime = DateTime.Now }); }
     }
 }

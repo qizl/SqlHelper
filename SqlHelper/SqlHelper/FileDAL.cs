@@ -9,8 +9,11 @@ namespace Com.EnjoyCodes.SqlHelper
 {
     public class FileDAL
     {
-        public bool Add(FileTerm fileTerm)
-        { return SqlHelper<FileTerm>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), "FileTerms", fileTerm) > 0; }
+        public object Add(FileTerm fileTerm)
+        { return SqlHelper<FileTerm>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), fileTerm, "FILETERMS", "ID"); }
+
+        public object Add(TIdentity tIdentity)
+        { return SqlHelper<TIdentity>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
 
         /// <summary>
         /// 根据ID查询单条数据
@@ -104,25 +107,10 @@ namespace Com.EnjoyCodes.SqlHelper
         { return SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr); }
 
         public int Update(FileTerm fileTerm)
-        {
-            string sqlStr = "UPDATE FILETERMS SET TITLE=@TITLE,DESCRIBE=@DESCRIBE,GENREID=@GENREID,CREATETIME=@CREATETIME,ISNOTICE=@ISNOTICE WHERE ID=@ID";
-            SqlParameter[] parameters = {
-                new SqlParameter("@ID",SqlDbType.UniqueIdentifier),
-                new SqlParameter("@TITLE",SqlDbType.NVarChar),
-                new SqlParameter("@DESCRIBE",SqlDbType.NVarChar),
-                new SqlParameter("@GENREID",SqlDbType.UniqueIdentifier),
-                new SqlParameter("@CREATETIME",SqlDbType.DateTime),
-                new SqlParameter("@ISNOTICE",SqlDbType.Bit),
-            };
-            parameters[0].Value = fileTerm.ID;
-            parameters[1].Value = fileTerm.Title;
-            parameters[2].Value = fileTerm.Describe;
-            parameters[3].Value = fileTerm.GenreID;
-            parameters[4].Value = fileTerm.CreateTime;
-            parameters[5].Value = fileTerm.IsNotice;
+        { return SqlHelper<FileTerm>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), fileTerm, "FILETERMS", "ID"); }
 
-            return SqlHelper.ExecuteNonQuery(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr, parameters);
-        }
+        public int Update(TIdentity tIdentity)
+        { return SqlHelper<TIdentity>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
 
         public int Delete(Guid id)
         {

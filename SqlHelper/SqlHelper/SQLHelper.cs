@@ -246,52 +246,58 @@ namespace Com.EnjoyCodes.SqlHelper
         /// C#类型与SQLServer类型对照字典
         /// </summary>
         private static Dictionary<Type, SqlDbType> sqlDbType = new Dictionary<Type, SqlDbType>() {
-            { typeof(long),SqlDbType.BigInt},
-            { typeof(int),SqlDbType.Int},
-            { typeof(short),SqlDbType.SmallInt},
-            { typeof(byte),SqlDbType.TinyInt},
-            { typeof(decimal),SqlDbType.Decimal},
-            { typeof(double),SqlDbType.Float},
-            { typeof(float),SqlDbType.Real},
-            { typeof(bool),SqlDbType.Bit},
-            { typeof(string),SqlDbType.NVarChar},
-            { typeof(char),SqlDbType.Char},
-            { typeof(DateTime),SqlDbType.DateTime},
-            { typeof(TimeSpan),SqlDbType.Timestamp},
-            { typeof(Guid),SqlDbType.UniqueIdentifier},
+            {typeof(long),SqlDbType.BigInt},
+            {typeof(int),SqlDbType.Int},
+            {typeof(short),SqlDbType.SmallInt},
+            {typeof(byte),SqlDbType.TinyInt},
+            {typeof(decimal),SqlDbType.Decimal},
+            {typeof(double),SqlDbType.Float},
+            {typeof(float),SqlDbType.Real},
+            {typeof(bool),SqlDbType.Bit},
+            {typeof(string),SqlDbType.NVarChar},
+            {typeof(char),SqlDbType.Char},
+            {typeof(DateTime),SqlDbType.DateTime},
+            {typeof(TimeSpan),SqlDbType.Timestamp},
+            {typeof(Guid),SqlDbType.UniqueIdentifier},
         };
 
         private static object getDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
 
-        public static int Create(string connectionString, string tableName, T model)
+        public static object Create(string connectionString, T model, string modelTableName, string modelPrimaryKey)
         {
-            int result = 0;
+            object primaryKeyValue = null;
+            Type modelPrimaryKeyType = typeof(T).GetProperty(modelPrimaryKey).PropertyType;
 
+            // 获取有值的属性
             PropertyInfo[] properties = typeof(T).GetProperties();
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
             foreach (var item in properties)
-            {
-                object value = item.GetValue(model);
-                object defaultValue = getDefaultValue(item.PropertyType);
-                if (!value.Equals(defaultValue))
+                if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)))
                 {
                     propertyInfoes.Add(item);
                     values.Add(item.GetValue(model));
                 }
-            }
 
+            // INSERT SQL 字符串
             StringBuilder sqlStr = new StringBuilder();
-            sqlStr.AppendFormat("INSERT INTO {0}({1}) VALUES({2})", tableName, string.Join(",", propertyInfoes.Select(k => k.Name)), "@" + string.Join(",@", propertyInfoes.Select(k => k.Name)));
+            sqlStr.AppendFormat("INSERT INTO {0}({1}) VALUES({2});", modelTableName, string.Join(",", propertyInfoes.Select(k => k.Name)), "@" + string.Join(",@", propertyInfoes.Select(k => k.Name)));
+            if (modelPrimaryKeyType != typeof(Guid))
+                sqlStr.Append("SET @ID_FYUJMNBVFGHJ=SCOPE_IDENTITY();");
 
-            SqlParameter[] parameters = new SqlParameter[propertyInfoes.Count];
+            // 参数设置
+            List<SqlParameter> parameters = new List<SqlParameter>();
             for (int i = 0; i < propertyInfoes.Count; i++)
-                parameters[i] = new SqlParameter()
+                parameters.Add(new SqlParameter()
                 {
                     ParameterName = "@" + propertyInfoes[i].Name,
                     SqlDbType = sqlDbType[values[i].GetType()],
                     Value = values[i]
-                };
+                });
+
+            // 输出主键
+            if (modelPrimaryKeyType != typeof(Guid))
+                parameters.Add(new SqlParameter() { ParameterName = "@ID_FYUJMNBVFGHJ", SqlDbType = sqlDbType[modelPrimaryKeyType], Direction = ParameterDirection.Output });
 
             using (SqlConnection cn = new SqlConnection(connectionString))
             {
@@ -302,9 +308,11 @@ namespace Com.EnjoyCodes.SqlHelper
                     cmd.Connection = cn;
                     cmd.CommandType = CommandType.Text;
                     cmd.CommandText = sqlStr.ToString();
-                    cmd.Parameters.AddRange(parameters);
+                    cmd.Parameters.AddRange(parameters.ToArray());
 
-                    result = cmd.ExecuteNonQuery();
+                    if (cmd.ExecuteNonQuery() > 0)
+                        primaryKeyValue = modelPrimaryKeyType != typeof(Guid) ? parameters[parameters.Count - 1].Value : typeof(T).GetProperty(modelPrimaryKey).GetValue(model);
+
                     cn.Close();
                     cn.Dispose();
                 }
@@ -316,7 +324,7 @@ namespace Com.EnjoyCodes.SqlHelper
                 }
             }
 
-            return result;
+            return primaryKeyValue;
         }
 
         public static T Read(string connectionString, CommandType commandType, string commandText)
@@ -565,6 +573,68 @@ namespace Com.EnjoyCodes.SqlHelper
                 }
             }
             return obj;
+        }
+
+        public static int Update(string connectionString, T model, string modelTableName, string modelPrimaryKey)
+        {
+            int result = 0;
+            Type modelPrimaryKeyType = typeof(T).GetProperty(modelPrimaryKey).PropertyType;
+
+            // 获取有值的属性
+            PropertyInfo[] properties = typeof(T).GetProperties();
+            List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
+            List<object> values = new List<object>();
+            foreach (var item in properties)
+                if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)))
+                {
+                    propertyInfoes.Add(item);
+                    values.Add(item.GetValue(model));
+                }
+
+            // UPDATE SQL 字符串
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("UPDATE {0} SET ", modelTableName);
+            foreach (var item in propertyInfoes)
+                if (item.Name.ToLower() != modelPrimaryKey.ToLower())
+                    sqlStr.AppendFormat("{0}=@{0},", item.Name);
+            sqlStr.Remove(sqlStr.Length - 1, 1);
+            sqlStr.AppendFormat(" WHERE {0}=@{0}", modelPrimaryKey);
+
+            // 参数设置
+            List<SqlParameter> parameters = new List<SqlParameter>();
+            for (int i = 0; i < propertyInfoes.Count; i++)
+                parameters.Add(new SqlParameter()
+                {
+                    ParameterName = "@" + propertyInfoes[i].Name,
+                    SqlDbType = sqlDbType[values[i].GetType()],
+                    Value = values[i]
+                });
+
+            using (SqlConnection cn = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    cn.Open();
+                    SqlCommand cmd = new SqlCommand();
+                    cmd.Connection = cn;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sqlStr.ToString();
+                    cmd.Parameters.AddRange(parameters.ToArray());
+
+                    result = cmd.ExecuteNonQuery();
+
+                    cn.Close();
+                    cn.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    cn.Close();
+                    cn.Dispose();
+                    throw ex;
+                }
+            }
+
+            return result;
         }
     }
 }
