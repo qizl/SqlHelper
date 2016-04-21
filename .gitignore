@@ -65,3 +65,7 @@ packages
 *.suo
 *.dll
 *.pdb
+/SqlHelper/SqlHelper/bin
+/SqlHelper/SqlHelper/obj
+/SqlHelper/Model/obj
+/SqlHelper/Model/bin
