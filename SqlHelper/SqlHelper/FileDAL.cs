@@ -3,35 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Com.EnjoyCodes.SqlHelper
 {
     public class FileDAL
     {
-        public int Add(FileTerm fileTerm)
-        {
-            string sqlStr = @"INSERT INTO FILETERMS(ID,TITLE,DESCRIBE,GENREID,CREATETIME,ISNOTICE) VALUES(@ID,@TITLE,@DESCRIBE,@GENREID,@CREATETIME,@ISNOTICE)";
-            SqlParameter[] parameters = {
-                new SqlParameter("@ID",SqlDbType.UniqueIdentifier),
-                new SqlParameter("@TITLE",SqlDbType.NVarChar),
-                new SqlParameter("@DESCRIBE",SqlDbType.NVarChar),
-                new SqlParameter("@GENREID",SqlDbType.UniqueIdentifier),
-                new SqlParameter("@CREATETIME",SqlDbType.DateTime),
-                new SqlParameter("@ISNOTICE",SqlDbType.Bit),
-            };
-            parameters[0].Value = fileTerm.ID;
-            parameters[1].Value = fileTerm.Title;
-            parameters[2].Value = fileTerm.Describe;
-            parameters[3].Value = fileTerm.GenreID;
-            parameters[4].Value = fileTerm.CreateTime;
-            parameters[5].Value = fileTerm.IsNotice;
-
-            return SqlHelper.ExecuteNonQuery(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr, parameters);
-        }
+        public bool Add(FileTerm fileTerm)
+        { return SqlHelper<FileTerm>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), "FileTerms", fileTerm) > 0; }
 
         /// <summary>
         /// 根据ID查询单条数据

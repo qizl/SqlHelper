@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                        case "Com.EnjoyCodes.SqlHelper":
-                        default: key = "MSSQLConnectionString"; break;
+                    case "Com.EnjoyCodes.SqlHelper":
+                    default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -242,6 +242,83 @@ namespace Com.EnjoyCodes.SqlHelper
 
     public class SqlHelper<T>
     {
+        /// <summary>
+        /// C#类型与SQLServer类型对照字典
+        /// </summary>
+        private static Dictionary<Type, SqlDbType> sqlDbType = new Dictionary<Type, SqlDbType>() {
+            { typeof(long),SqlDbType.BigInt},
+            { typeof(int),SqlDbType.Int},
+            { typeof(short),SqlDbType.SmallInt},
+            { typeof(byte),SqlDbType.TinyInt},
+            { typeof(decimal),SqlDbType.Decimal},
+            { typeof(double),SqlDbType.Float},
+            { typeof(float),SqlDbType.Real},
+            { typeof(bool),SqlDbType.Bit},
+            { typeof(string),SqlDbType.NVarChar},
+            { typeof(char),SqlDbType.Char},
+            { typeof(DateTime),SqlDbType.DateTime},
+            { typeof(TimeSpan),SqlDbType.Timestamp},
+            { typeof(Guid),SqlDbType.UniqueIdentifier},
+        };
+
+        private static object getDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
+
+        public static int Create(string connectionString, string tableName, T model)
+        {
+            int result = 0;
+
+            PropertyInfo[] properties = typeof(T).GetProperties();
+            List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
+            List<object> values = new List<object>();
+            foreach (var item in properties)
+            {
+                object value = item.GetValue(model);
+                object defaultValue = getDefaultValue(item.PropertyType);
+                if (!value.Equals(defaultValue))
+                {
+                    propertyInfoes.Add(item);
+                    values.Add(item.GetValue(model));
+                }
+            }
+
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("INSERT INTO {0}({1}) VALUES({2})", tableName, string.Join(",", propertyInfoes.Select(k => k.Name)), "@" + string.Join(",@", propertyInfoes.Select(k => k.Name)));
+
+            SqlParameter[] parameters = new SqlParameter[propertyInfoes.Count];
+            for (int i = 0; i < propertyInfoes.Count; i++)
+                parameters[i] = new SqlParameter()
+                {
+                    ParameterName = "@" + propertyInfoes[i].Name,
+                    SqlDbType = sqlDbType[values[i].GetType()],
+                    Value = values[i]
+                };
+
+            using (SqlConnection cn = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    cn.Open();
+                    SqlCommand cmd = new SqlCommand();
+                    cmd.Connection = cn;
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sqlStr.ToString();
+                    cmd.Parameters.AddRange(parameters);
+
+                    result = cmd.ExecuteNonQuery();
+                    cn.Close();
+                    cn.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    cn.Close();
+                    cn.Dispose();
+                    throw ex;
+                }
+            }
+
+            return result;
+        }
+
         public static T Read(string connectionString, CommandType commandType, string commandText)
         { return Read(connectionString, commandType, commandText, null); }
 

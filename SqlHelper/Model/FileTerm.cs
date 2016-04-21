@@ -14,5 +14,6 @@ namespace Com.EnjoyCodes.Model
         public Guid GenreID { get; set; }
         public DateTime CreateTime { get; set; }
         public bool IsNotice { get; set; }
+        public int Amounts { get; set; }
     }
 }

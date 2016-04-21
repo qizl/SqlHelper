@@ -66,7 +66,8 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
                     Describe = "add from ado.net" + rad.NextDouble(),
                     GenreID = Guid.Empty,
                     IsNotice = true,
-                    CreateTime = DateTime.Now
+                    CreateTime = DateTime.Now,
+                    Amounts = 100
                 };
                 this._fileDAL.Add(fileTerm);
             }
@@ -74,8 +75,6 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void TestGetPaging()
-        {
-            var fileTerms = this._fileDAL.GetPaging(2, 100, string.Empty, "CREATETIME DESC");
-        }
+        { var fileTerms = this._fileDAL.GetPaging(2, 100, string.Empty, "CREATETIME DESC"); }
     }
 }
