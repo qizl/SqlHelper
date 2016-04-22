@@ -69,3 +69,4 @@ packages
 /SqlHelper/SqlHelper/obj
 /SqlHelper/Model/obj
 /SqlHelper/Model/bin
+*.suo
