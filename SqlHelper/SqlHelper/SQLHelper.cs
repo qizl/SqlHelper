@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                    case "Com.EnjoyCodes.SqlHelper":
-                    default: key = "MSSQLConnectionString"; break;
+                        case "Com.EnjoyCodes.SqlHelper":
+                        default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -221,7 +221,7 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
-        public static object ExecuteScalar(SqlConnection connection, CommandType commandType, string commandText, SqlParameter[] commandParameters)
+        public static object ExecuteScalar(SqlConnection connection, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
             SqlCommand cmd = new SqlCommand();
             prepareCommand(cmd, connection, (SqlTransaction)null, commandType, commandText, commandParameters);
@@ -242,6 +242,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
     public class SqlHelper<T>
     {
+        #region Members & Private Utility Methods
         /// <summary>
         /// C#类型与SQLServer类型对照字典
         /// </summary>
@@ -261,8 +262,97 @@ namespace Com.EnjoyCodes.SqlHelper
             {typeof(Guid),SqlDbType.UniqueIdentifier},
         };
 
-        private static object getDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
+        private static void fill(T obj, IDataReader dr)
+        {
+            PropertyInfo[] properties = typeof(T).GetProperties();
+            foreach (var item in properties)
+                try
+                { if (dr[item.Name] != null) item.SetValue(obj, convertObject(dr[item.Name], item.PropertyType), null); }
+                catch { }
+        }
 
+        /// <summary>
+        /// 将一个对象转换为指定类型
+        /// </summary>
+        /// <param name="obj">待转换的对象</param>
+        /// <param name="type">目标类型</param>
+        /// <returns></returns>
+        private static object convertObject(object obj, Type type)
+        {
+            if (type == null) return obj;
+            if (obj == null) return type.IsValueType ? Activator.CreateInstance(type) : null;
+
+            Type underlyingType = Nullable.GetUnderlyingType(type);
+            if (type.IsAssignableFrom(obj.GetType()))
+            {
+                // 如果待转换对象的类型与目标类型兼容，则无需转换
+                return obj;
+            }
+            else if ((underlyingType ?? type).IsEnum)
+            {
+                // 如果待转换的对象的基类型为枚举
+
+                if (underlyingType != null && string.IsNullOrEmpty(obj.ToString()))
+                {
+                    // 如果目标类型为可空枚举，并且待转换对象为null 则直接返回null值
+                    return null;
+                }
+                else
+                    return Enum.Parse(underlyingType ?? type, obj.ToString());
+            }
+            else if (typeof(IConvertible).IsAssignableFrom(underlyingType ?? type))
+            {
+                // 如果目标类型的基类型实现了IConvertible，则直接转换
+                try
+                {
+                    return Convert.ChangeType(obj, underlyingType ?? type, null);
+                }
+                catch
+                {
+                    return underlyingType == null ? Activator.CreateInstance(type) : null;
+                }
+            }
+            else
+            {
+                System.ComponentModel.TypeConverter converter = System.ComponentModel.TypeDescriptor.GetConverter(type);
+                if (converter.CanConvertFrom(obj.GetType()))
+                    return converter.ConvertFrom(obj);
+
+                ConstructorInfo constructor = type.GetConstructor(Type.EmptyTypes);
+                if (constructor != null)
+                {
+                    object o = constructor.Invoke(null);
+                    PropertyInfo[] propertys = type.GetProperties();
+                    Type oldType = obj.GetType();
+                    foreach (PropertyInfo property in propertys)
+                    {
+                        PropertyInfo p = oldType.GetProperty(property.Name);
+                        if (property.CanWrite && p != null && p.CanRead)
+                            property.SetValue(o, convertObject(p.GetValue(obj, null), property.PropertyType), null);
+                    }
+                    return o;
+                }
+            }
+            return obj;
+        }
+
+        /// <summary>
+        /// 获取类型的默认值
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        private static object getDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
+        #endregion
+
+        #region CRUD,Page
+        /// <summary>
+        /// 添加一条表数据
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="model"></param>
+        /// <param name="modelTableName">表名称</param>
+        /// <param name="modelPrimaryKey">表主键</param>
+        /// <returns></returns>
         public static object Create(string connectionString, T model, string modelTableName, string modelPrimaryKey)
         {
             object primaryKeyValue = null;
@@ -501,80 +591,14 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
-        private static void fill(T obj, IDataReader dr)
-        {
-            PropertyInfo[] properties = typeof(T).GetProperties();
-            foreach (var item in properties)
-                try
-                { if (dr[item.Name] != null) item.SetValue(obj, convertObject(dr[item.Name], item.PropertyType), null); }
-                catch { }
-        }
-
         /// <summary>
-        /// 将一个对象转换为指定类型
+        /// 更新一条表数据
         /// </summary>
-        /// <param name="obj">待转换的对象</param>
-        /// <param name="type">目标类型</param>
+        /// <param name="connectionString"></param>
+        /// <param name="model"></param>
+        /// <param name="modelTableName">表名称</param>
+        /// <param name="modelPrimaryKey">表主键</param>
         /// <returns></returns>
-        private static object convertObject(object obj, Type type)
-        {
-            if (type == null) return obj;
-            if (obj == null) return type.IsValueType ? Activator.CreateInstance(type) : null;
-
-            Type underlyingType = Nullable.GetUnderlyingType(type);
-            if (type.IsAssignableFrom(obj.GetType()))
-            {
-                // 如果待转换对象的类型与目标类型兼容，则无需转换
-                return obj;
-            }
-            else if ((underlyingType ?? type).IsEnum)
-            {
-                // 如果待转换的对象的基类型为枚举
-
-                if (underlyingType != null && string.IsNullOrEmpty(obj.ToString()))
-                {
-                    // 如果目标类型为可空枚举，并且待转换对象为null 则直接返回null值
-                    return null;
-                }
-                else
-                    return Enum.Parse(underlyingType ?? type, obj.ToString());
-            }
-            else if (typeof(IConvertible).IsAssignableFrom(underlyingType ?? type))
-            {
-                // 如果目标类型的基类型实现了IConvertible，则直接转换
-                try
-                {
-                    return Convert.ChangeType(obj, underlyingType ?? type, null);
-                }
-                catch
-                {
-                    return underlyingType == null ? Activator.CreateInstance(type) : null;
-                }
-            }
-            else
-            {
-                System.ComponentModel.TypeConverter converter = System.ComponentModel.TypeDescriptor.GetConverter(type);
-                if (converter.CanConvertFrom(obj.GetType()))
-                    return converter.ConvertFrom(obj);
-
-                ConstructorInfo constructor = type.GetConstructor(Type.EmptyTypes);
-                if (constructor != null)
-                {
-                    object o = constructor.Invoke(null);
-                    PropertyInfo[] propertys = type.GetProperties();
-                    Type oldType = obj.GetType();
-                    foreach (PropertyInfo property in propertys)
-                    {
-                        PropertyInfo p = oldType.GetProperty(property.Name);
-                        if (property.CanWrite && p != null && p.CanRead)
-                            property.SetValue(o, convertObject(p.GetValue(obj, null), property.PropertyType), null);
-                    }
-                    return o;
-                }
-            }
-            return obj;
-        }
-
         public static int Update(string connectionString, T model, string modelTableName, string modelPrimaryKey)
         {
             int result = 0;
@@ -636,5 +660,6 @@ namespace Com.EnjoyCodes.SqlHelper
 
             return result;
         }
+        #endregion
     }
 }
