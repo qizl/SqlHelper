@@ -260,6 +260,7 @@ namespace Com.EnjoyCodes.SqlHelper
             {typeof(DateTime),SqlDbType.DateTime},
             {typeof(TimeSpan),SqlDbType.Timestamp},
             {typeof(Guid),SqlDbType.UniqueIdentifier},
+            {typeof(Enum),SqlDbType.Int}
         };
 
         private static void fill(T obj, IDataReader dr)
@@ -366,7 +367,10 @@ namespace Com.EnjoyCodes.SqlHelper
                 if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)))
                 {
                     propertyInfoes.Add(item);
-                    values.Add(item.GetValue(model));
+                    if (item.PropertyType.BaseType == typeof(Enum)) // 枚举类型，保存int值
+                        values.Add((int)item.GetValue(model));
+                    else
+                        values.Add(item.GetValue(model));
                 }
 
             // INSERT SQL 字符串

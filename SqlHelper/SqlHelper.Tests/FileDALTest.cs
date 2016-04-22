@@ -75,7 +75,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void AddIdentityData()
-        { this._fileDAL.Add(new TIdentity() { Name = "test", CreateTime = DateTime.Now }); }
+        { this._fileDAL.Add(new TIdentity() { Name = "test", CreateTime = DateTime.Now, Type = Types.T2 }); }
 
         [TestMethod]
         public void GetPaging()
