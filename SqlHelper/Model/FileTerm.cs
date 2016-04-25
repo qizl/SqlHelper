@@ -15,5 +15,6 @@ namespace Com.EnjoyCodes.Model
         public DateTime CreateTime { get; set; }
         public bool IsNotice { get; set; }
         public int Amounts { get; set; }
+        public Types Type { get; set; }
     }
 }
