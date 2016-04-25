@@ -364,14 +364,14 @@ namespace Com.EnjoyCodes.SqlHelper
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
             foreach (var item in properties)
-                if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)))
+            {
+                object obj = item.GetValue(model);
+                if (obj != null)
                 {
                     propertyInfoes.Add(item);
-                    if (item.PropertyType.BaseType == typeof(Enum)) // 枚举类型，保存int值
-                        values.Add((int)item.GetValue(model));
-                    else
-                        values.Add(item.GetValue(model));
+                    values.Add(item.PropertyType.BaseType == typeof(Enum) ? (int)item.GetValue(model) : item.GetValue(model)); // 枚举类型，保存int值
                 }
+            }
 
             // INSERT SQL 字符串
             StringBuilder sqlStr = new StringBuilder();
@@ -613,11 +613,14 @@ namespace Com.EnjoyCodes.SqlHelper
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
             foreach (var item in properties)
-                if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)))
+            {
+                object obj = item.GetValue(model);
+                if (obj != null)
                 {
                     propertyInfoes.Add(item);
-                    values.Add(item.GetValue(model));
+                    values.Add(obj);
                 }
+            }
 
             // UPDATE SQL 字符串
             StringBuilder sqlStr = new StringBuilder();
@@ -634,8 +637,8 @@ namespace Com.EnjoyCodes.SqlHelper
                 parameters.Add(new SqlParameter()
                 {
                     ParameterName = "@" + propertyInfoes[i].Name,
-                    SqlDbType = sqlDbType[values[i].GetType()],
-                    Value = values[i]
+                    SqlDbType = propertyInfoes[i].PropertyType.BaseType == typeof(Enum) ? sqlDbType[typeof(Enum)] : sqlDbType[values[i].GetType()],
+                    Value = propertyInfoes[i].PropertyType.BaseType == typeof(Enum) ? (int)values[i] : values[i]
                 });
 
             using (SqlConnection cn = new SqlConnection(connectionString))
