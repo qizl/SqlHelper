@@ -345,6 +345,38 @@ namespace Com.EnjoyCodes.SqlHelper
         private static object getDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
         #endregion
 
+        #region Table
+        public static int CreateTable(string connectionString, string modelTableName, string modelPrimaryKey, string columnPrefix)
+        {
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("CREATE TABLE [{0}](", modelTableName);
+
+            PropertyInfo[] properties = typeof(T).GetProperties();
+            foreach (var item in properties)
+            {
+                sqlStr.AppendFormat("[{0}{1}] ", columnPrefix, item.Name);
+                if (item.PropertyType == typeof(string))
+                    sqlStr.AppendFormat("{0}(max)", sqlDbType[item.PropertyType]);
+                else if (item.PropertyType.BaseType == typeof(Enum))
+                    sqlStr.AppendFormat("{0}", sqlDbType[typeof(Enum)]);
+                else
+                    sqlStr.AppendFormat("{0}", sqlDbType[item.PropertyType]);
+
+                if (item.Name.ToLower() == modelPrimaryKey.ToLower())
+                {
+                    sqlStr.Append(" PRIMARY KEY ");
+                    if (item.PropertyType == typeof(Int64) || item.PropertyType == typeof(Int32) || item.PropertyType == typeof(Int16))
+                        sqlStr.Append("IDENTITY");
+                }
+                sqlStr.Append(",");
+            }
+
+            sqlStr.Append(")");
+
+            return SqlHelper.ExecuteNonQuery(connectionString, CommandType.Text, sqlStr.ToString());
+        }
+        #endregion
+
         #region CRUD,Page
         /// <summary>
         /// 添加一条表数据

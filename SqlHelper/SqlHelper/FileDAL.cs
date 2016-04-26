@@ -9,6 +9,9 @@ namespace Com.EnjoyCodes.SqlHelper
 {
     public class FileDAL
     {
+        public int CreateTable<T>(string modelTableName, string modelPrimaryKey, string columnPrefix)
+        { return SqlHelper<T>.CreateTable(SqlHelper.GetConnectionString_RW(this.GetType()), modelTableName, modelPrimaryKey, columnPrefix); }
+
         public object Add(FileTerm fileTerm)
         { return SqlHelper<FileTerm>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), fileTerm, "FILETERMS", "ID"); }
 
