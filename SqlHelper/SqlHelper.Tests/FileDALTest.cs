@@ -92,5 +92,23 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
                 Type = Types.T3
             });
         }
+
+        private class CTest
+        {
+            public int ID { get; set; }
+            public Guid SID { get; set; }
+            public string Name { get; set; }
+            public E TE { get; set; }
+            public DateTime CreateTime { get; set; }
+        }
+        private enum E
+        {
+            A,
+            B
+        }
+
+        [TestMethod]
+        public void CreateTable()
+        { var result = new FileDAL().CreateTable<CTest>("CTest1", "ID", "CT_"); }
     }
 }
