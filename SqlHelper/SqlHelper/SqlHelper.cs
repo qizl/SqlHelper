@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                        case "Com.EnjoyCodes.SqlHelper":
-                        default: key = "MSSQLConnectionString"; break;
+                    case "Com.EnjoyCodes.SqlHelper":
+                    default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -396,14 +396,11 @@ namespace Com.EnjoyCodes.SqlHelper
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
             foreach (var item in properties)
-            {
-                object obj = item.GetValue(model);
-                if (obj != null)
+                if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)))
                 {
                     propertyInfoes.Add(item);
                     values.Add(item.PropertyType.BaseType == typeof(Enum) ? (int)item.GetValue(model) : item.GetValue(model)); // 枚举类型，保存int值
                 }
-            }
 
             // INSERT SQL 字符串
             StringBuilder sqlStr = new StringBuilder();
@@ -638,7 +635,6 @@ namespace Com.EnjoyCodes.SqlHelper
         public static int Update(string connectionString, T model, string modelTableName, string modelPrimaryKey)
         {
             int result = 0;
-            Type modelPrimaryKeyType = typeof(T).GetProperty(modelPrimaryKey).PropertyType;
 
             // 获取有值的属性
             PropertyInfo[] properties = typeof(T).GetProperties();

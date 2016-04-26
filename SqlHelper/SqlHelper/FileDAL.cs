@@ -18,6 +18,9 @@ namespace Com.EnjoyCodes.SqlHelper
         public object Add(TIdentity tIdentity)
         { return SqlHelper<TIdentity>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
 
+        public object Add<T>(T t, string modelTableName, string modelPrimaryKey)
+        { return SqlHelper<T>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey); }
+
         /// <summary>
         /// 根据ID查询单条数据
         /// </summary>
@@ -114,6 +117,9 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public int Update(TIdentity tIdentity)
         { return SqlHelper<TIdentity>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
+
+        public int Update<T>(T t, string modelTableName, string modelPrimaryKey)
+        { return SqlHelper<T>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey); }
 
         public int Delete(Guid id)
         {
