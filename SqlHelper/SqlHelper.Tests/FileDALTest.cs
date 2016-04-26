@@ -67,7 +67,8 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
                     GenreID = Guid.Empty,
                     IsNotice = true,
                     CreateTime = DateTime.Now,
-                    Amounts = 100
+                    Amounts = 100,
+                    Type = Types.T2
                 };
                 this._fileDAL.Add(fileTerm);
             }
@@ -83,6 +84,13 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void Update()
-        { this._fileDAL.Update(new TIdentity() { ID = 5, Name = "test update", CreateTime = DateTime.Now }); }
+        {
+            this._fileDAL.Update(new FileTerm()
+            {
+                ID = Guid.Parse("A1808924-C25D-4C54-A17A-0D2C54262797"),
+                CreateTime = DateTime.Now,
+                Type = Types.T3
+            });
+        }
     }
 }
