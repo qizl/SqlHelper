@@ -70,3 +70,4 @@ packages
 /SqlHelper/Model/obj
 /SqlHelper/Model/bin
 *.suo
+SqlHelper/.vs/SqlHelper/v15/.suo
