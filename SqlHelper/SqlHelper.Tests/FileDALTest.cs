@@ -125,5 +125,9 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         [TestMethod]
         public void UpdateT()
         { var result = this._fileDAL.Update<CTest>(new CTest() { ID = 1, Name = "Test01", CreateTime = DateTime.Now }, "CTest1", "ID", "ct_"); }
+
+        [TestMethod]
+        public void AddNullString()
+        { var result = this._fileDAL.Add<CTest>(new CTest() { TE = E.B, CreateTime = DateTime.Now }, "CTEST1", "ID", string.Empty); }
     }
 }
