@@ -128,6 +128,6 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void AddNullString()
-        { var result = this._fileDAL.Add<CTest>(new CTest() { TE = E.B, CreateTime = DateTime.Now }, "CTEST1", "ID", string.Empty); }
+        { var result = this._fileDAL.Add<CTest>(new CTest() { ID = 123, SID = Guid.NewGuid(), Name = "tester", CreateTime = DateTime.Now }, "CTEST1", "ID", string.Empty); }
     }
 }

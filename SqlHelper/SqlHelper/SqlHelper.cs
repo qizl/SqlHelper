@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                        case "Com.EnjoyCodes.SqlHelper":
-                        default: key = "MSSQLConnectionString"; break;
+                    case "Com.EnjoyCodes.SqlHelper":
+                    default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -410,7 +410,9 @@ namespace Com.EnjoyCodes.SqlHelper
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
             foreach (var item in properties)
-                if (item.Name != modelPrimaryKey || (item.Name == modelPrimaryKey && (item.PropertyType != typeof(Int16) && item.PropertyType != typeof(Int32) & item.PropertyType != typeof(Int64)))) // 不取自增字段的主键
+                if ((item.Name != modelPrimaryKey || (item.Name == modelPrimaryKey && (item.PropertyType != typeof(Int16) && item.PropertyType != typeof(Int32) & item.PropertyType != typeof(Int64)))) // 非主键或非自增字段的主键
+                    && (item.PropertyType.IsValueType || (!item.PropertyType.IsValueType && item.GetValue(model) != getDefaultValue(item.PropertyType))) // 值类型或非空的引用类型
+                    )
                 {
                     propertyInfoes.Add(item);
                     values.Add(item.PropertyType.BaseType == typeof(Enum) ? (int)item.GetValue(model) : item.GetValue(model)); // 枚举类型，保存int值
@@ -588,7 +590,7 @@ namespace Com.EnjoyCodes.SqlHelper
                                 while (sdr.Read())
                                 {
                                     var obj = Activator.CreateInstance<T>();
-                                    fill(obj, sdr,columnPrefix);
+                                    fill(obj, sdr, columnPrefix);
                                     result.Datas.Add(obj);
                                 }
                         }
