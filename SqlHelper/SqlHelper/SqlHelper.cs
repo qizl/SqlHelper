@@ -410,7 +410,7 @@ namespace Com.EnjoyCodes.SqlHelper
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
             foreach (var item in properties)
-                if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)))
+                if (!item.GetValue(model).Equals(getDefaultValue(item.PropertyType)) || item.PropertyType.BaseType == typeof(Enum))
                 {
                     propertyInfoes.Add(item);
                     values.Add(item.PropertyType.BaseType == typeof(Enum) ? (int)item.GetValue(model) : item.GetValue(model)); // 枚举类型，保存int值
