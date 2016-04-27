@@ -109,14 +109,21 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void CreateTable()
-        { var result = this._fileDAL.CreateTable<CTest>("CTest1", "ID", ""); }
+        { var result = this._fileDAL.CreateTable<CTest>("CTest1", "ID", "ct_"); }
 
         [TestMethod]
         public void AddT()
-        { var result = this._fileDAL.Add<CTest>(new CTest() { SID = Guid.NewGuid(), Name = "Test", TE = E.B, CreateTime = DateTime.Now }, "CTest1", "ID"); }
+        {
+            for (int i = 0; i < 100; i++)
+                this._fileDAL.Add<CTest>(new CTest() { SID = Guid.NewGuid(), Name = "Test" + i, TE = E.B, CreateTime = DateTime.Now }, "CTest1", "ID", "ct_");
+        }
+
+        [TestMethod]
+        public void ReadListT()
+        { var result = this._fileDAL.ReadList<CTest>("CTest1", "ct_"); }
 
         [TestMethod]
         public void UpdateT()
-        { var result = this._fileDAL.Update<CTest>(new CTest() { ID = 1, Name = "Test01", CreateTime = DateTime.Now }, "CTest1", "ID"); }
+        { var result = this._fileDAL.Update<CTest>(new CTest() { ID = 1, Name = "Test01", CreateTime = DateTime.Now }, "CTest1", "ID", "ct_"); }
     }
 }
