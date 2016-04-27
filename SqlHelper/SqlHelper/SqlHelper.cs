@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                    case "Com.EnjoyCodes.SqlHelper":
-                    default: key = "MSSQLConnectionString"; break;
+                        case "Com.EnjoyCodes.SqlHelper":
+                        default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -263,12 +263,15 @@ namespace Com.EnjoyCodes.SqlHelper
             {typeof(Enum),SqlDbType.Int}
         };
 
-        private static void fill(T obj, IDataReader dr)
+        private static void fill(T obj, IDataReader dr, string columnPrefix)
         {
             PropertyInfo[] properties = typeof(T).GetProperties();
             foreach (var item in properties)
                 try
-                { if (dr[item.Name] != null) item.SetValue(obj, convertObject(dr[item.Name], item.PropertyType), null); }
+                {
+                    object v = dr[columnPrefix + item.Name];
+                    if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType), null);
+                }
                 catch { }
         }
 
@@ -387,6 +390,17 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="modelPrimaryKey">表主键</param>
         /// <returns></returns>
         public static object Create(string connectionString, T model, string modelTableName, string modelPrimaryKey)
+        { return Create(connectionString, model, modelTableName, string.Empty); }
+        /// <summary>
+        /// 添加一条表数据
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="model"></param>
+        /// <param name="modelTableName">表名称</param>
+        /// <param name="modelPrimaryKey">表主键</param>
+        /// <param name="columnPrefix">表字段前缀</param>
+        /// <returns></returns>
+        public static object Create(string connectionString, T model, string modelTableName, string modelPrimaryKey, string columnPrefix)
         {
             object primaryKeyValue = null;
             Type modelPrimaryKeyType = typeof(T).GetProperty(modelPrimaryKey).PropertyType;
@@ -404,7 +418,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
             // INSERT SQL 字符串
             StringBuilder sqlStr = new StringBuilder();
-            sqlStr.AppendFormat("INSERT INTO {0}({1}) VALUES({2});", modelTableName, string.Join(",", propertyInfoes.Select(k => k.Name)), "@" + string.Join(",@", propertyInfoes.Select(k => k.Name)));
+            sqlStr.AppendFormat("INSERT INTO {0}({1}) VALUES({2});", modelTableName, string.Join(",", propertyInfoes.Select(k => columnPrefix + k.Name)), "@" + string.Join(",@", propertyInfoes.Select(k => k.Name)));
             if (modelPrimaryKeyType != typeof(Guid))
                 sqlStr.Append("SET @ID_FYUJMNBVFGHJ=SCOPE_IDENTITY();");
 
@@ -451,9 +465,12 @@ namespace Com.EnjoyCodes.SqlHelper
         }
 
         public static T Read(string connectionString, CommandType commandType, string commandText)
-        { return Read(connectionString, commandType, commandText, null); }
-
+        { return Read(connectionString, commandType, commandText, string.Empty, null); }
+        public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix)
+        { return Read(connectionString, commandType, commandText, columnPrefix, null); }
         public static T Read(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        { return Read(connectionString, commandType, commandText, string.Empty, commandParameters); }
+        public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
             T result;
             using (SqlConnection cn = new SqlConnection(connectionString))
@@ -468,7 +485,7 @@ namespace Com.EnjoyCodes.SqlHelper
                 {
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {
-                        result = read(sdr);
+                        result = read(sdr, columnPrefix);
                         sdr.Close();
                         sdr.Dispose();
                     }
@@ -485,18 +502,21 @@ namespace Com.EnjoyCodes.SqlHelper
             }
             return result;
         }
-        private static T read(IDataReader dr)
+        private static T read(IDataReader dr, string columnPrefix)
         {
             var result = Activator.CreateInstance<T>();
             if (dr.Read())
-                fill(result, dr);
+                fill(result, dr, columnPrefix);
             return result;
         }
 
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText)
-        { return ReadList(connectionString, commandType, commandText, null); }
-
+        { return ReadList(connectionString, commandType, commandText, string.Empty, null); }
+        public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix)
+        { return ReadList(connectionString, commandType, commandText, columnPrefix, null); }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        { return ReadList(connectionString, commandType, commandText, string.Empty, commandParameters); }
+        public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
             List<T> result;
             using (SqlConnection cn = new SqlConnection(connectionString))
@@ -511,7 +531,7 @@ namespace Com.EnjoyCodes.SqlHelper
                 {
                     using (SqlDataReader sdr = cmd.ExecuteReader())
                     {
-                        result = readList(sdr);
+                        result = readList(sdr, columnPrefix);
                         sdr.Close();
                         sdr.Dispose();
                     }
@@ -528,61 +548,25 @@ namespace Com.EnjoyCodes.SqlHelper
             }
             return result;
         }
-
-        private static List<T> readList(IDataReader dr)
+        private static List<T> readList(IDataReader dr, string columnPrefix)
         {
             var result = new List<T>();
             while (dr.Read())
             {
                 var obj = Activator.CreateInstance<T>();
-                fill(obj, dr);
+                fill(obj, dr, columnPrefix);
                 result.Add(obj);
             }
             return result;
         }
 
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText)
-        {
-            Pager<T> result = new Pager<T>();
-            using (SqlConnection cn = new SqlConnection(connectionString))
-            {
-                SqlCommand cmd = cn.CreateCommand();
-                cmd.CommandText = commandText;
-                cmd.CommandType = commandType;
-                cn.Open();
-                try
-                {
-                    using (SqlDataReader sdr = cmd.ExecuteReader())
-                    {
-                        if (sdr.Read())
-                        {
-                            result.RecordCount = sdr.GetInt32(0);
-                            result.Datas = new List<T>();
-                            if (sdr.NextResult())
-                                while (sdr.Read())
-                                {
-                                    var obj = Activator.CreateInstance<T>();
-                                    fill(obj, sdr);
-                                    result.Datas.Add(obj);
-                                }
-                        }
-                        sdr.Close();
-                        sdr.Dispose();
-                    }
-                    cn.Close();
-                    cn.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    cn.Close();
-                    cn.Dispose();
-                    throw ex;
-                }
-            }
-            return result;
-        }
-
+        { return ReadPaging(connectionString, commandType, commandText, string.Empty, null); }
+        public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix)
+        { return ReadPaging(connectionString, commandType, commandText, columnPrefix, null); }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
+        { return ReadPaging(connectionString, commandType, commandText, string.Empty, commandParameters); }
+        public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
             Pager<T> result = new Pager<T>();
             using (SqlConnection cn = new SqlConnection(connectionString))
@@ -604,7 +588,7 @@ namespace Com.EnjoyCodes.SqlHelper
                                 while (sdr.Read())
                                 {
                                     var obj = Activator.CreateInstance<T>();
-                                    fill(obj, sdr);
+                                    fill(obj, sdr,columnPrefix);
                                     result.Datas.Add(obj);
                                 }
                         }
@@ -633,6 +617,17 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="modelPrimaryKey">表主键</param>
         /// <returns></returns>
         public static int Update(string connectionString, T model, string modelTableName, string modelPrimaryKey)
+        { return Update(connectionString, model, modelTableName, modelPrimaryKey); }
+        /// <summary>
+        /// 更新一条表数据
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="model"></param>
+        /// <param name="modelTableName">表名称</param>
+        /// <param name="modelPrimaryKey">表主键</param>
+        /// <param name="columnPrefix">表字段前缀</param>
+        /// <returns></returns>
+        public static int Update(string connectionString, T model, string modelTableName, string modelPrimaryKey, string columnPrefix)
         {
             int result = 0;
 
@@ -655,9 +650,9 @@ namespace Com.EnjoyCodes.SqlHelper
             sqlStr.AppendFormat("UPDATE {0} SET ", modelTableName);
             foreach (var item in propertyInfoes)
                 if (item.Name.ToLower() != modelPrimaryKey.ToLower())
-                    sqlStr.AppendFormat("{0}=@{0},", item.Name);
+                    sqlStr.AppendFormat("{0}{1}=@{1},", columnPrefix, item.Name);
             sqlStr.Remove(sqlStr.Length - 1, 1);
-            sqlStr.AppendFormat(" WHERE {0}=@{0}", modelPrimaryKey);
+            sqlStr.AppendFormat(" WHERE {0}{1}=@{1}", columnPrefix, modelPrimaryKey);
 
             // 参数设置
             List<SqlParameter> parameters = new List<SqlParameter>();

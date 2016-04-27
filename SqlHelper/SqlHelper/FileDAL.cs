@@ -18,8 +18,8 @@ namespace Com.EnjoyCodes.SqlHelper
         public object Add(TIdentity tIdentity)
         { return SqlHelper<TIdentity>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
 
-        public object Add<T>(T t, string modelTableName, string modelPrimaryKey)
-        { return SqlHelper<T>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey); }
+        public object Add<T>(T t, string modelTableName, string modelPrimaryKey, string columnPrefix)
+        { return SqlHelper<T>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey, columnPrefix); }
 
         /// <summary>
         /// 根据ID查询单条数据
@@ -112,14 +112,17 @@ namespace Com.EnjoyCodes.SqlHelper
         public DataSet Get(string sqlStr)
         { return SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr); }
 
+        public List<T> ReadList<T>(string modelTableName, string columnPrefix)
+        { return SqlHelper<T>.ReadList(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, string.Format("SELECT * FROM {0}", modelTableName), columnPrefix); }
+
         public int Update(FileTerm fileTerm)
         { return SqlHelper<FileTerm>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), fileTerm, "FILETERMS", "ID"); }
 
         public int Update(TIdentity tIdentity)
         { return SqlHelper<TIdentity>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
 
-        public int Update<T>(T t, string modelTableName, string modelPrimaryKey)
-        { return SqlHelper<T>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey); }
+        public int Update<T>(T t, string modelTableName, string modelPrimaryKey, string columnPrefix)
+        { return SqlHelper<T>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey, columnPrefix); }
 
         public int Delete(Guid id)
         {
