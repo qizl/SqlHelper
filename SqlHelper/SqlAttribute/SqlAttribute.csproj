@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8ED89855-B132-4C98-A829-5F90A70CD4D9}</ProjectGuid>
+    <ProjectGuid>{0E266D05-0A2E-4E81-927D-D5086AB4A7E5}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Com.EnjoyCodes.SqlHelper</RootNamespace>
-    <AssemblyName>SqlHelper</AssemblyName>
+    <RootNamespace>Com.EnjoyCodes.SqlAttribute</RootNamespace>
+    <AssemblyName>SqlAttribute</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -31,30 +31,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileDAL.cs" />
-    <Compile Include="Pager.cs" />
-    <Compile Include="SqlHelper.cs" />
+    <Compile Include="ForeignKeyAttribute.cs" />
+    <Compile Include="KeyAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Model\Model.csproj">
-      <Project>{d44ffcad-03dc-4e08-9600-8adc738f9109}</Project>
-      <Name>Model</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\SqlAttribute\SqlAttribute.csproj">
-      <Project>{0e266d05-0a2e-4e81-927d-d5086ab4a7e5}</Project>
-      <Name>SqlAttribute</Name>
-    </ProjectReference>
+    <Compile Include="TableAttribute.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

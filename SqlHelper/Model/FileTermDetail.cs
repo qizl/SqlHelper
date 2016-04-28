@@ -7,19 +7,13 @@ using System.Threading.Tasks;
 
 namespace Com.EnjoyCodes.Model
 {
-    public enum Types
-    {
-        T1 = 1,
-        T2,
-        T3
-    }
-
-    public class TIdentity
+    [Table(Name = "FileTermDetails", Prefix = "ftd_")]
+    public class FileTermDetail
     {
         [Key]
         public int ID { get; set; }
+        public int FileTermID { get; set; }
         public string Name { get; set; }
-        public Types Type { get; set; }
         public DateTime CreateTime { get; set; }
     }
 }

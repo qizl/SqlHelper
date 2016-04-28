@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Com.EnjoyCodes.SqlAttribute;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -89,8 +90,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                    case "Com.EnjoyCodes.SqlHelper":
-                    default: key = "MSSQLConnectionString"; break;
+                        case "Com.EnjoyCodes.SqlHelper":
+                        default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -242,11 +243,11 @@ namespace Com.EnjoyCodes.SqlHelper
 
     public class SqlHelper<T>
     {
-        #region Members & Private Utility Methods
+        #region Members & Utility Methods
         /// <summary>
         /// C#类型与SQLServer类型对照字典
         /// </summary>
-        private static Dictionary<Type, SqlDbType> sqlDbType = new Dictionary<Type, SqlDbType>() {
+        public static Dictionary<Type, SqlDbType> SqlDbTypes = new Dictionary<Type, SqlDbType>() {
             {typeof(long),SqlDbType.BigInt},
             {typeof(int),SqlDbType.Int},
             {typeof(short),SqlDbType.SmallInt},
@@ -346,9 +347,52 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="type"></param>
         /// <returns></returns>
         private static object getDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
+
+        /// <summary>
+        /// 获取模型的自定义属性
+        /// </summary>
+        /// <returns>表名、主键、前缀</returns>
+        public static Tuple<string, string, string> GetTableAttributes()
+        {
+            string tableName = string.Empty;
+            string prefix = string.Empty;
+            string key = string.Empty;
+
+            // 表属性
+            TableAttribute tableAttribute = (TableAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(TableAttribute));
+            if (tableAttribute != null)
+            {
+                tableName = tableAttribute.Name;
+                prefix = tableAttribute.Prefix;
+            }
+            else
+            {
+                tableName = typeof(T).Name;
+            }
+
+            // 主键
+            PropertyInfo[] properties = typeof(T).GetProperties();
+            foreach (var item in properties)
+            {
+                object attr = item.GetCustomAttribute(typeof(Attribute), true);
+                if (attr is KeyAttribute)
+                    key = item.Name;
+            }
+
+            if (string.IsNullOrEmpty(key))
+                throw new Exception("未指定主键！", new Exception("请指定主键KeyAttribute属性。"));
+
+            return Tuple.Create<string, string, string>(tableName, key, prefix);
+        }
         #endregion
 
         #region Table
+        public static int CreateTable(string connectionString)
+        {
+            Tuple<string, string, string> t = GetTableAttributes();
+            return CreateTable(connectionString, t.Item1, t.Item2, t.Item3);
+        }
+
         public static int CreateTable(string connectionString, string modelTableName, string modelPrimaryKey, string columnPrefix)
         {
             StringBuilder sqlStr = new StringBuilder();
@@ -357,21 +401,27 @@ namespace Com.EnjoyCodes.SqlHelper
             PropertyInfo[] properties = typeof(T).GetProperties();
             foreach (var item in properties)
             {
-                sqlStr.AppendFormat("[{0}{1}] ", columnPrefix, item.Name);
-                if (item.PropertyType == typeof(string))
-                    sqlStr.AppendFormat("{0}(max)", sqlDbType[item.PropertyType]);
-                else if (item.PropertyType.BaseType == typeof(Enum))
-                    sqlStr.AppendFormat("{0}", sqlDbType[typeof(Enum)]);
-                else
-                    sqlStr.AppendFormat("{0}", sqlDbType[item.PropertyType]);
-
-                if (item.Name.ToLower() == modelPrimaryKey.ToLower())
+                try
                 {
-                    sqlStr.Append(" PRIMARY KEY ");
-                    if (item.PropertyType == typeof(Int64) || item.PropertyType == typeof(Int32) || item.PropertyType == typeof(Int16))
-                        sqlStr.Append("IDENTITY");
+                    if (!item.PropertyType.IsSealed) continue;
+
+                    sqlStr.AppendFormat("[{0}{1}] ", columnPrefix, item.Name);
+                    if (item.PropertyType == typeof(string))
+                        sqlStr.AppendFormat("{0}(max)", SqlDbTypes[item.PropertyType]);
+                    else if (item.PropertyType.IsEnum)
+                        sqlStr.AppendFormat("{0}", SqlDbTypes[typeof(Enum)]);
+                    else
+                        sqlStr.AppendFormat("{0}", SqlDbTypes[item.PropertyType]);
+
+                    if (item.Name.ToLower() == modelPrimaryKey.ToLower())
+                    {
+                        sqlStr.Append(" PRIMARY KEY ");
+                        if (item.PropertyType == typeof(Int64) || item.PropertyType == typeof(Int32) || item.PropertyType == typeof(Int16))
+                            sqlStr.Append("IDENTITY");
+                    }
+                    sqlStr.Append(",");
                 }
-                sqlStr.Append(",");
+                catch { }
             }
 
             sqlStr.Append(")");
@@ -381,16 +431,11 @@ namespace Com.EnjoyCodes.SqlHelper
         #endregion
 
         #region CRUD,Page
-        /// <summary>
-        /// 添加一条表数据
-        /// </summary>
-        /// <param name="connectionString"></param>
-        /// <param name="model"></param>
-        /// <param name="modelTableName">表名称</param>
-        /// <param name="modelPrimaryKey">表主键</param>
-        /// <returns></returns>
-        public static object Create(string connectionString, T model, string modelTableName, string modelPrimaryKey)
-        { return Create(connectionString, model, modelTableName, string.Empty); }
+        public static object Create(string connectionString, T model)
+        {
+            Tuple<string, string, string> t = GetTableAttributes();
+            return Create(connectionString, model, t.Item1, t.Item2, t.Item3);
+        }
         /// <summary>
         /// 添加一条表数据
         /// </summary>
@@ -410,13 +455,18 @@ namespace Com.EnjoyCodes.SqlHelper
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
             foreach (var item in properties)
-                if ((item.Name != modelPrimaryKey || (item.Name == modelPrimaryKey && (item.PropertyType != typeof(Int16) && item.PropertyType != typeof(Int32) & item.PropertyType != typeof(Int64)))) // 非主键或非自增字段的主键
-                    && (item.PropertyType.IsValueType || (!item.PropertyType.IsValueType && item.GetValue(model) != getDefaultValue(item.PropertyType))) // 值类型或非空的引用类型
-                    )
+                try
                 {
-                    propertyInfoes.Add(item);
-                    values.Add(item.PropertyType.BaseType == typeof(Enum) ? (int)item.GetValue(model) : item.GetValue(model)); // 枚举类型，保存int值
+                    if (item.PropertyType.IsSealed // 密封类
+                        && (item.Name != modelPrimaryKey || (item.Name == modelPrimaryKey && (item.PropertyType != typeof(Int16) && item.PropertyType != typeof(Int32) & item.PropertyType != typeof(Int64)))) // 非主键或非自增字段的主键
+                        && (item.PropertyType.IsValueType || (!item.PropertyType.IsValueType && item.GetValue(model) != getDefaultValue(item.PropertyType))) // 值类型或非空的引用类型
+                        )
+                    {
+                        propertyInfoes.Add(item);
+                        values.Add(item.PropertyType.IsEnum ? (int)item.GetValue(model) : item.GetValue(model)); // 枚举类型，保存int值
+                    }
                 }
+                catch { }
 
             // INSERT SQL 字符串
             StringBuilder sqlStr = new StringBuilder();
@@ -430,13 +480,13 @@ namespace Com.EnjoyCodes.SqlHelper
                 parameters.Add(new SqlParameter()
                 {
                     ParameterName = "@" + propertyInfoes[i].Name,
-                    SqlDbType = sqlDbType[values[i].GetType()],
+                    SqlDbType = SqlDbTypes[values[i].GetType()],
                     Value = values[i]
                 });
 
             // 输出主键
             if (modelPrimaryKeyType != typeof(Guid))
-                parameters.Add(new SqlParameter() { ParameterName = "@ID_FYUJMNBVFGHJ", SqlDbType = sqlDbType[modelPrimaryKeyType], Direction = ParameterDirection.Output });
+                parameters.Add(new SqlParameter() { ParameterName = "@ID_FYUJMNBVFGHJ", SqlDbType = SqlDbTypes[modelPrimaryKeyType], Direction = ParameterDirection.Output });
 
             using (SqlConnection cn = new SqlConnection(connectionString))
             {
@@ -467,11 +517,21 @@ namespace Com.EnjoyCodes.SqlHelper
         }
 
         public static T Read(string connectionString, CommandType commandType, string commandText)
-        { return Read(connectionString, commandType, commandText, string.Empty, null); }
+        {
+            Tuple<string, string, string> t = null;
+            try { t = GetTableAttributes(); }
+            catch { }
+            return Read(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
+        }
         public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return Read(connectionString, commandType, commandText, columnPrefix, null); }
         public static T Read(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
-        { return Read(connectionString, commandType, commandText, string.Empty, commandParameters); }
+        {
+            Tuple<string, string, string> t = null;
+            try { t = GetTableAttributes(); }
+            catch { }
+            return Read(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
+        }
         public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
             T result;
@@ -513,11 +573,21 @@ namespace Com.EnjoyCodes.SqlHelper
         }
 
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText)
-        { return ReadList(connectionString, commandType, commandText, string.Empty, null); }
+        {
+            Tuple<string, string, string> t = null;
+            try { t = GetTableAttributes(); }
+            catch { }
+            return ReadList(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
+        }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return ReadList(connectionString, commandType, commandText, columnPrefix, null); }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
-        { return ReadList(connectionString, commandType, commandText, string.Empty, commandParameters); }
+        {
+            Tuple<string, string, string> t = null;
+            try { t = GetTableAttributes(); }
+            catch { }
+            return ReadList(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
+        }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
             List<T> result;
@@ -563,11 +633,21 @@ namespace Com.EnjoyCodes.SqlHelper
         }
 
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText)
-        { return ReadPaging(connectionString, commandType, commandText, string.Empty, null); }
+        {
+            Tuple<string, string, string> t = null;
+            try { t = GetTableAttributes(); }
+            catch { }
+            return ReadPaging(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
+        }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return ReadPaging(connectionString, commandType, commandText, columnPrefix, null); }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
-        { return ReadPaging(connectionString, commandType, commandText, string.Empty, commandParameters); }
+        {
+            Tuple<string, string, string> t = null;
+            try { t = GetTableAttributes(); }
+            catch { }
+            return ReadPaging(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
+        }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
             Pager<T> result = new Pager<T>();
@@ -610,16 +690,11 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
-        /// <summary>
-        /// 更新一条表数据
-        /// </summary>
-        /// <param name="connectionString"></param>
-        /// <param name="model"></param>
-        /// <param name="modelTableName">表名称</param>
-        /// <param name="modelPrimaryKey">表主键</param>
-        /// <returns></returns>
-        public static int Update(string connectionString, T model, string modelTableName, string modelPrimaryKey)
-        { return Update(connectionString, model, modelTableName, modelPrimaryKey); }
+        public static int Update(string connectionString, T model)
+        {
+            Tuple<string, string, string> t = GetTableAttributes();
+            return Update(connectionString, model, t.Item1, t.Item2, t.Item3);
+        }
         /// <summary>
         /// 更新一条表数据
         /// </summary>
@@ -639,6 +714,8 @@ namespace Com.EnjoyCodes.SqlHelper
             List<object> values = new List<object>();
             foreach (var item in properties)
             {
+                if (!item.PropertyType.IsSealed) continue;
+
                 object obj = item.GetValue(model);
                 if (obj != null)
                 {
@@ -662,8 +739,8 @@ namespace Com.EnjoyCodes.SqlHelper
                 parameters.Add(new SqlParameter()
                 {
                     ParameterName = "@" + propertyInfoes[i].Name,
-                    SqlDbType = propertyInfoes[i].PropertyType.BaseType == typeof(Enum) ? sqlDbType[typeof(Enum)] : sqlDbType[values[i].GetType()],
-                    Value = propertyInfoes[i].PropertyType.BaseType == typeof(Enum) ? (int)values[i] : values[i]
+                    SqlDbType = propertyInfoes[i].PropertyType.IsEnum ? SqlDbTypes[typeof(Enum)] : SqlDbTypes[values[i].GetType()],
+                    Value = propertyInfoes[i].PropertyType.IsEnum ? (int)values[i] : values[i]
                 });
 
             using (SqlConnection cn = new SqlConnection(connectionString))
