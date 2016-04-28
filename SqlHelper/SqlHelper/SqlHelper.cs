@@ -349,7 +349,7 @@ namespace Com.EnjoyCodes.SqlHelper
         public static object GetDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
 
         /// <summary>
-        /// 获取模型的自定义属性
+        /// 获取模型属性
         /// </summary>
         /// <returns>表名、主键、前缀</returns>
         public static Tuple<string, string, string> GetTableAttributes()
@@ -429,7 +429,7 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         #endregion
 
-        #region CRUD,Page
+        #region CRUD,List&Page
         public static object Create(string connectionString, T model)
         {
             Tuple<string, string, string> t = GetTableAttributes();
@@ -631,6 +631,24 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
+        public static Pager<T> ReadPaging(string connectionString, int pageNumber, int pageSize)
+        {
+            Tuple<string, string, string> t = GetTableAttributes();
+            return ReadPaging(connectionString, pageNumber, pageSize, t.Item1, string.Empty, t.Item3 + t.Item2);
+        }
+        public static Pager<T> ReadPaging(string connectionstring, int pageNumber, int pageSize, string sqlFrom, string sqlWhere, string sqlOrderBy)
+        {
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("SELECT COUNT(1) FROM {0} {1}", sqlFrom, string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere));
+            sqlStr.AppendFormat("SELECT * FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, * FROM {2} {3}) F WHERE F.ROWINDEX BETWEEN {4} AND {5}", pageNumber * pageSize, string.IsNullOrEmpty(sqlOrderBy.Trim()) ? "ID" : sqlOrderBy, sqlFrom, string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere), (pageNumber - 1) * pageSize + 1, pageNumber * pageSize);
+
+            Pager<T> result = SqlHelper<T>.ReadPaging(connectionstring, CommandType.Text, sqlStr.ToString());
+            result.PageNumber = pageNumber;
+            result.PageSize = pageSize;
+
+            return result;
+        }
+
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText)
         {
             Tuple<string, string, string> t = null;
@@ -665,6 +683,7 @@ namespace Com.EnjoyCodes.SqlHelper
                         if (sdr.Read())
                         {
                             result.RecordCount = sdr.GetInt32(0);
+                            result.Datas = new List<T>();
                             if (sdr.NextResult())
                                 while (sdr.Read())
                                 {

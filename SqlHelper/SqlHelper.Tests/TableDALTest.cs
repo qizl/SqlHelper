@@ -13,7 +13,7 @@ using System.Linq;
 namespace Com.EnjoyCodes.SqlHelper.Tests
 {
     [TestClass]
-    public class FileDALTest
+    public class TableDALTest
     {
         private TableDAL _fileDAL = new TableDAL();
 
@@ -133,7 +133,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void GetPaging()
-        { var fileTerms = this._fileDAL.GetPaging(2, 100, string.Empty, "CREATETIME DESC"); }
+        { var fileTerms = this._fileDAL.GetPaging(2, 2); }
 
         [TestMethod]
         public void ReadListT()
