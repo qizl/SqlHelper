@@ -68,19 +68,8 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="sqlWhere"></param>
         /// <param name="sqlOrderBy"></param>
         /// <returns></returns>
-        public Pager<FileTerm> GetPaging(int pageNumber, int pageSize, string sqlWhere, string sqlOrderBy)
-        {
-            StringBuilder sqlStr = new StringBuilder();
-            sqlStr.Append("SELECT COUNT(1) FROM FILETERMS ");
-            sqlStr.Append(string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere));
-            sqlStr.AppendFormat("SELECT * FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, * FROM FILETERMS) F WHERE F.ROWINDEX BETWEEN {2} AND {3}", pageNumber * pageSize, string.IsNullOrEmpty(sqlOrderBy.Trim()) ? "ID" : sqlOrderBy, (pageNumber - 1) * pageSize + 1, pageNumber * pageSize);
-
-            Pager<FileTerm> result = SqlHelper<FileTerm>.ReadPaging(SqlHelper.GetConnectionString_RW(base.GetType()), CommandType.Text, sqlStr.ToString());
-            result.PageNumber = pageNumber;
-            result.PageSize = pageSize;
-
-            return result;
-        }
+        public Pager<FileTerm> GetPaging(int pageNumber, int pageSize)
+        { return SqlHelper<FileTerm>.ReadPaging(SqlHelper.GetConnectionString_RW(this.GetType()), pageNumber, pageSize); }
 
         /// <summary>
         /// 查询数据集
