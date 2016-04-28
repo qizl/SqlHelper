@@ -15,7 +15,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
     [TestClass]
     public class FileDALTest
     {
-        private FileDAL _fileDAL = new FileDAL();
+        private TableDAL _fileDAL = new TableDAL();
 
         [Table(Name = "CTests", Prefix = "ct_")]
         private class CTest

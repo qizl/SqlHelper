@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Com.EnjoyCodes.SqlHelper
 {
-    public class FileDAL
+    public class TableDAL
     {
         public int CreateTable<T>()
         { return SqlHelper<T>.CreateTable(SqlHelper.GetConnectionString_RW(this.GetType())); }
@@ -39,6 +39,11 @@ namespace Com.EnjoyCodes.SqlHelper
             return SqlHelper<T>.Read(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString(), sqlParameters);
         }
 
+        /// <summary>
+        /// 联合查询
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public FileTerm Get(Guid id)
         {
             StringBuilder sqlStr = new StringBuilder();
