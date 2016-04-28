@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Com.EnjoyCodes.SqlHelper
 {
-    public class FileDAL
+    public class TableDAL
     {
         public int CreateTable<T>()
         { return SqlHelper<T>.CreateTable(SqlHelper.GetConnectionString_RW(this.GetType())); }
@@ -37,6 +37,26 @@ namespace Com.EnjoyCodes.SqlHelper
             };
 
             return SqlHelper<T>.Read(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString(), sqlParameters);
+        }
+
+        /// <summary>
+        /// 联合查询
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public FileTerm Get(Guid id)
+        {
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("SELECT * FROM FILETERMS WHERE FT_ID='{0}';SELECT * FROM FILETERMDETAILS WHERE FTD_FILETERMID='{0}';", id);
+            DataSet ds = SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString());
+
+            StringBuilder sb = new StringBuilder();
+            foreach (DataTable dt in ds.Tables)
+                foreach (DataRow dr in dt.Rows)
+                    for (int i = 0; i < dt.Columns.Count; i++)
+                        sb.Append(dr[i].ToString());
+
+            return null;
         }
 
         /// <summary>

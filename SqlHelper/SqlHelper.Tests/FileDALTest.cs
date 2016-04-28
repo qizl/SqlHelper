@@ -15,7 +15,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
     [TestClass]
     public class FileDALTest
     {
-        private FileDAL _fileDAL = new FileDAL();
+        private TableDAL _fileDAL = new TableDAL();
 
         [Table(Name = "CTests", Prefix = "ct_")]
         private class CTest
@@ -36,7 +36,8 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         [TestMethod]
         public void CreateTable()
         {
-            this._fileDAL.CreateTable<TIdentity>();
+            this._fileDAL.CreateTable<FileTermDetail>();
+            //this._fileDAL.CreateTable<TIdentity>();
             //this._fileDAL.CreateTable<CTest>();
             //this._fileDAL.CreateTable<FileTerm>(); 
         }
@@ -83,7 +84,12 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void AddByAttribute()
-        { var result = this._fileDAL.Add<FileTerm>(new FileTerm() { ID = Guid.NewGuid(), Title = "LJAFLJAL", CreateTime = DateTime.Now }); }
+        {
+            //var result = this._fileDAL.Add<FileTerm>(new FileTerm() { ID = Guid.NewGuid(), Title = "LJAFLJAL", CreateTime = DateTime.Now });
+            this._fileDAL.Add(new FileTermDetail() { FileTermID = Guid.Parse("AAC1F9E5-566E-400F-9555-FF3441ED979E"), Name = "D1", CreateTime = DateTime.Now });
+            this._fileDAL.Add(new FileTermDetail() { FileTermID = Guid.Parse("AAC1F9E5-566E-400F-9555-FF3441ED979E"), Name = "D2", CreateTime = DateTime.Now });
+            this._fileDAL.Add(new FileTermDetail() { FileTermID = Guid.Parse("AAC1F9E5-566E-400F-9555-FF3441ED979E"), Name = "D3", CreateTime = DateTime.Now });
+        }
 
         [TestMethod]
         public void AddT()
@@ -120,6 +126,10 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         [TestMethod]
         public void AddIdentityData()
         { this._fileDAL.Add(new TIdentity() { Name = "test", CreateTime = DateTime.Now, Type = Types.T2 }); }
+
+        [TestMethod]
+        public void Get()
+        { this._fileDAL.Get(Guid.Parse("AAC1F9E5-566E-400F-9555-FF3441ED979E")); }
 
         [TestMethod]
         public void GetPaging()

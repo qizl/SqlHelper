@@ -346,7 +346,7 @@ namespace Com.EnjoyCodes.SqlHelper
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        private static object getDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
+        public static object GetDefaultValue(Type type) { return type.IsValueType ? Activator.CreateInstance(type) : null; }
 
         /// <summary>
         /// 获取模型的自定义属性
@@ -386,13 +386,12 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         #endregion
 
-        #region Table
+        #region Table Handler
         public static int CreateTable(string connectionString)
         {
             Tuple<string, string, string> t = GetTableAttributes();
             return CreateTable(connectionString, t.Item1, t.Item2, t.Item3);
         }
-
         public static int CreateTable(string connectionString, string modelTableName, string modelPrimaryKey, string columnPrefix)
         {
             StringBuilder sqlStr = new StringBuilder();
@@ -459,7 +458,7 @@ namespace Com.EnjoyCodes.SqlHelper
                 {
                     if (item.PropertyType.IsSealed // 密封类
                         && (item.Name != modelPrimaryKey || (item.Name == modelPrimaryKey && (item.PropertyType != typeof(Int16) && item.PropertyType != typeof(Int32) & item.PropertyType != typeof(Int64)))) // 非主键或非自增字段的主键
-                        && (item.PropertyType.IsValueType || (!item.PropertyType.IsValueType && item.GetValue(model) != getDefaultValue(item.PropertyType))) // 值类型或非空的引用类型
+                        && (item.PropertyType.IsValueType || (!item.PropertyType.IsValueType && item.GetValue(model) != GetDefaultValue(item.PropertyType))) // 值类型或非空的引用类型
                         )
                     {
                         propertyInfoes.Add(item);
