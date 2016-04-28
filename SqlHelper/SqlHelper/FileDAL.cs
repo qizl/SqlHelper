@@ -39,6 +39,21 @@ namespace Com.EnjoyCodes.SqlHelper
             return SqlHelper<T>.Read(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString(), sqlParameters);
         }
 
+        public FileTerm Get(Guid id)
+        {
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("SELECT * FROM FILETERMS WHERE FT_ID='{0}';SELECT * FROM FILETERMDETAILS WHERE FTD_FILETERMID='{0}';", id);
+            DataSet ds = SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString());
+
+            StringBuilder sb = new StringBuilder();
+            foreach (DataTable dt in ds.Tables)
+                foreach (DataRow dr in dt.Rows)
+                    for (int i = 0; i < dt.Columns.Count; i++)
+                        sb.Append(dr[i].ToString());
+
+            return null;
+        }
+
         /// <summary>
         /// 查询数据集
         ///     分页方法

@@ -12,7 +12,7 @@ namespace Com.EnjoyCodes.Model
     {
         [Key]
         public int ID { get; set; }
-        public int FileTermID { get; set; }
+        public Guid FileTermID { get; set; }
         public string Name { get; set; }
         public DateTime CreateTime { get; set; }
     }
