@@ -64,6 +64,10 @@
       <Project>{d44ffcad-03dc-4e08-9600-8adc738f9109}</Project>
       <Name>Model</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SqlAttribute\SqlAttribute.csproj">
+      <Project>{0e266d05-0a2e-4e81-927d-d5086ab4a7e5}</Project>
+      <Name>SqlAttribute</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SqlHelper\SqlHelper.csproj">
       <Project>{8ed89855-b132-4c98-a829-5f90a70cd4d9}</Project>
       <Name>SqlHelper</Name>

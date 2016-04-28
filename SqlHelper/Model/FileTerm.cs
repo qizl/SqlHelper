@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Com.EnjoyCodes.SqlAttribute;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,8 +7,10 @@ using System.Threading.Tasks;
 
 namespace Com.EnjoyCodes.Model
 {
+    [Table(Name = "FileTerms", Prefix = "ft_")]
     public class FileTerm
     {
+        [Key]
         public Guid ID { get; set; }
         public string Title { get; set; }
         public string Describe { get; set; }
@@ -16,5 +19,8 @@ namespace Com.EnjoyCodes.Model
         public bool IsNotice { get; set; }
         public int Amounts { get; set; }
         public Types Type { get; set; }
+
+        [ForeignKey("ID")]
+        public virtual List<FileTermDetail> Details { get; set; }
     }
 }

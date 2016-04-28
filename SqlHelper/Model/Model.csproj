@@ -41,8 +41,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileTerm.cs" />
+    <Compile Include="FileTermDetail.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TIdentity.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SqlAttribute\SqlAttribute.csproj">
+      <Project>{0e266d05-0a2e-4e81-927d-d5086ab4a7e5}</Project>
+      <Name>SqlAttribute</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

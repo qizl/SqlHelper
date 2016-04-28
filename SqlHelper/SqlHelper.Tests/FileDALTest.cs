@@ -5,6 +5,10 @@ using Com.EnjoyCodes.Model;
 using System.Text;
 using System.Data;
 using System.Diagnostics;
+using Com.EnjoyCodes.SqlAttribute;
+using System.Reflection;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Com.EnjoyCodes.SqlHelper.Tests
 {
@@ -12,6 +16,30 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
     public class FileDALTest
     {
         private FileDAL _fileDAL = new FileDAL();
+
+        [Table(Name = "CTests", Prefix = "ct_")]
+        private class CTest
+        {
+            [Key]
+            public int ID { get; set; }
+            public Guid SID { get; set; }
+            public string Name { get; set; }
+            public E TE { get; set; }
+            public DateTime CreateTime { get; set; }
+        }
+        private enum E
+        {
+            A,
+            B
+        }
+
+        [TestMethod]
+        public void CreateTable()
+        {
+            this._fileDAL.CreateTable<TIdentity>();
+            //this._fileDAL.CreateTable<CTest>();
+            //this._fileDAL.CreateTable<FileTerm>(); 
+        }
 
         [TestMethod]
         public void CRUD()
@@ -28,23 +56,23 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
             };
             this._fileDAL.Add(fileTerm);
 
-            var fileTerm1 = this._fileDAL.Get(fileTerm.ID);
+            var fileTerm1 = this._fileDAL.Get<FileTerm>(fileTerm.ID);
             fileTerm1.CreateTime = DateTime.Now;
 
             this._fileDAL.Update(fileTerm1);
 
-            int r = this._fileDAL.Delete(fileTerm.ID);
+            int r = this._fileDAL.Delete<FileTerm>(fileTerm.ID);
 
             // 2.查询数据集 - DataSet
-            DataSet dataSet = this._fileDAL.Get("SELECT TOP 100 * FROM FILETERMS ORDER BY CREATETIME DESC");
+            DataSet dataSet = this._fileDAL.Get("SELECT TOP 100 * FROM FILETERMS ORDER BY ft_CREATETIME DESC");
             StringBuilder sb = new StringBuilder();
             foreach (DataRow row in dataSet.Tables[0].Rows)
-                sb.Append(row["ID"] + "," + row["Title"] + "," + row["CreateTime"] + Environment.NewLine);
+                sb.Append(row["ft_ID"] + "," + row["ft_Title"] + "," + row["ft_CreateTime"] + Environment.NewLine);
             Debug.WriteLine(sb.ToString());
 
             // 3.查询数据集
             //var fileTerms = this._fileDAL.Get(10);
-            var fileTerms = this._fileDAL.Get(1, 9, string.Empty, "ID");
+            var fileTerms = this._fileDAL.Get(0, 9, string.Empty, "ft_ID");
 
             // 4.查询表行数
             int count = this._fileDAL.Count();
@@ -52,6 +80,21 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
             // 5.查询是否存在数据
             bool b = this._fileDAL.IsExists("t");
         }
+
+        [TestMethod]
+        public void AddByAttribute()
+        { var result = this._fileDAL.Add<FileTerm>(new FileTerm() { ID = Guid.NewGuid(), Title = "LJAFLJAL", CreateTime = DateTime.Now }); }
+
+        [TestMethod]
+        public void AddT()
+        {
+            for (int i = 0; i < 100; i++)
+                this._fileDAL.Add<CTest>(new CTest() { SID = Guid.NewGuid(), Name = "Test" + i, TE = E.B, CreateTime = DateTime.Now });
+        }
+
+        [TestMethod]
+        public void AddNullString()
+        { var result = this._fileDAL.Add<CTest>(new CTest() { ID = 123, SID = Guid.NewGuid(), Name = null, CreateTime = DateTime.Now }); }
 
         [TestMethod]
         public void AddDatas()
@@ -83,6 +126,10 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         { var fileTerms = this._fileDAL.GetPaging(2, 100, string.Empty, "CREATETIME DESC"); }
 
         [TestMethod]
+        public void ReadListT()
+        { var result = this._fileDAL.ReadList<CTest>(); }
+
+        [TestMethod]
         public void Update()
         {
             this._fileDAL.Update(new FileTerm()
@@ -93,41 +140,12 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
             });
         }
 
-        private class CTest
-        {
-            public int ID { get; set; }
-            public Guid SID { get; set; }
-            public string Name { get; set; }
-            public E TE { get; set; }
-            public DateTime CreateTime { get; set; }
-        }
-        private enum E
-        {
-            A,
-            B
-        }
-
         [TestMethod]
-        public void CreateTable()
-        { var result = this._fileDAL.CreateTable<CTest>("CTest1", "ID", "ct_"); }
-
-        [TestMethod]
-        public void AddT()
-        {
-            for (int i = 0; i < 100; i++)
-                this._fileDAL.Add<CTest>(new CTest() { SID = Guid.NewGuid(), Name = "Test" + i, TE = E.B, CreateTime = DateTime.Now }, "CTest1", "ID", "ct_");
-        }
-
-        [TestMethod]
-        public void ReadListT()
-        { var result = this._fileDAL.ReadList<CTest>("CTest1", "ct_"); }
+        public void UpdateByAttribute()
+        { var result = this._fileDAL.Update<FileTerm>(new FileTerm() { ID = new Guid("B7393707-CDB0-44D4-85F0-DF21783D5CD4"), Title = "LJAFLJAL001", CreateTime = DateTime.Now }); }
 
         [TestMethod]
         public void UpdateT()
-        { var result = this._fileDAL.Update<CTest>(new CTest() { ID = 1, Name = "Test01", CreateTime = DateTime.Now }, "CTest1", "ID", "ct_"); }
-
-        [TestMethod]
-        public void AddNullString()
-        { var result = this._fileDAL.Add<CTest>(new CTest() { ID = 123, SID = Guid.NewGuid(), Name = "tester", CreateTime = DateTime.Now }, "CTEST1", "ID", string.Empty); }
+        { var result = this._fileDAL.Update<CTest>(new CTest() { ID = 1, Name = "Test01", CreateTime = DateTime.Now }); }
     }
 }

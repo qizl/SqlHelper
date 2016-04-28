@@ -9,28 +9,34 @@ namespace Com.EnjoyCodes.SqlHelper
 {
     public class FileDAL
     {
-        public int CreateTable<T>(string modelTableName, string modelPrimaryKey, string columnPrefix)
-        { return SqlHelper<T>.CreateTable(SqlHelper.GetConnectionString_RW(this.GetType()), modelTableName, modelPrimaryKey, columnPrefix); }
+        public int CreateTable<T>()
+        { return SqlHelper<T>.CreateTable(SqlHelper.GetConnectionString_RW(this.GetType())); }
 
-        public object Add(FileTerm fileTerm)
-        { return SqlHelper<FileTerm>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), fileTerm, "FILETERMS", "ID"); }
-
-        public object Add(TIdentity tIdentity)
-        { return SqlHelper<TIdentity>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
-
-        public object Add<T>(T t, string modelTableName, string modelPrimaryKey, string columnPrefix)
-        { return SqlHelper<T>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey, columnPrefix); }
+        public object Add<T>(T t)
+        { return SqlHelper<T>.Create(SqlHelper.GetConnectionString_RW(this.GetType()), t); }
 
         /// <summary>
         /// 根据ID查询单条数据
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public FileTerm Get(Guid id)
+        public T Get<T>(object id)
         {
-            var result = new FileTerm();
-            string sqlStr = @"SELECT TOP 1 * FROM FILETERMS WHERE ID='" + id + "'";
-            return SqlHelper<FileTerm>.Read(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr);
+            Tuple<string, string, string> t = null;
+            try { t = SqlHelper<T>.GetTableAttributes(); }
+            catch { }
+
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("SELECT * FROM {0} WHERE {1}{2}=@{2}", t.Item1, t.Item3, t.Item2);
+            SqlParameter[] sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter()
+            {
+                ParameterName = "@" + t.Item2,
+                SqlDbType = SqlHelper<T>.SqlDbTypes[typeof(T).GetProperty(t.Item2).PropertyType],
+                Value = id
+            };
+
+            return SqlHelper<T>.Read(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString(), sqlParameters);
         }
 
         /// <summary>
@@ -112,22 +118,29 @@ namespace Com.EnjoyCodes.SqlHelper
         public DataSet Get(string sqlStr)
         { return SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr); }
 
-        public List<T> ReadList<T>(string modelTableName, string columnPrefix)
-        { return SqlHelper<T>.ReadList(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, string.Format("SELECT * FROM {0}", modelTableName), columnPrefix); }
+        public List<T> ReadList<T>()
+        { return SqlHelper<T>.ReadList(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, string.Format("SELECT * FROM {0}", SqlHelper<T>.GetTableAttributes().Item1)); }
 
-        public int Update(FileTerm fileTerm)
-        { return SqlHelper<FileTerm>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), fileTerm, "FILETERMS", "ID"); }
+        public int Update<T>(T t)
+        { return SqlHelper<T>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), t); }
 
-        public int Update(TIdentity tIdentity)
-        { return SqlHelper<TIdentity>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), tIdentity, "TIDENTITY", "ID"); }
-
-        public int Update<T>(T t, string modelTableName, string modelPrimaryKey, string columnPrefix)
-        { return SqlHelper<T>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), t, modelTableName, modelPrimaryKey, columnPrefix); }
-
-        public int Delete(Guid id)
+        public int Delete<T>(object id)
         {
-            string sqlStr = @"DELETE FROM FILETERMS WHERE ID='" + id + "'";
-            return SqlHelper.ExecuteNonQuery(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr);
+            Tuple<string, string, string> t = null;
+            try { t = SqlHelper<T>.GetTableAttributes(); }
+            catch { }
+
+            StringBuilder sqlStr = new StringBuilder();
+            sqlStr.AppendFormat("DELETE FROM {0} WHERE {1}{2}=@{2}", t.Item1, t.Item3, t.Item2);
+            SqlParameter[] sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter()
+            {
+                ParameterName = "@" + t.Item2,
+                SqlDbType = SqlHelper<T>.SqlDbTypes[typeof(T).GetProperty(t.Item2).PropertyType],
+                Value = id
+            };
+
+            return SqlHelper.ExecuteNonQuery(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString(), sqlParameters);
         }
 
         /// <summary>
