@@ -517,18 +517,14 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public static T Read(string connectionString, CommandType commandType, string commandText)
         {
-            Tuple<string, string, string> t = null;
-            try { t = GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = GetTableAttributes();
             return Read(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
         }
         public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return Read(connectionString, commandType, commandText, columnPrefix, null); }
         public static T Read(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
-            Tuple<string, string, string> t = null;
-            try { t = GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = GetTableAttributes();
             return Read(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
         }
         public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
@@ -573,18 +569,14 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText)
         {
-            Tuple<string, string, string> t = null;
-            try { t = GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = GetTableAttributes();
             return ReadList(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
         }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return ReadList(connectionString, commandType, commandText, columnPrefix, null); }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
-            Tuple<string, string, string> t = null;
-            try { t = GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = GetTableAttributes();
             return ReadList(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
         }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
@@ -631,7 +623,6 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
-
         public static Pager<T> ReadPaging(string connectionString, int pageNumber, int pageSize)
         {
             Tuple<string, string, string> t = GetTableAttributes();
@@ -668,18 +659,14 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText)
         {
-            Tuple<string, string, string> t = null;
-            try { t = GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = GetTableAttributes();
             return ReadPaging(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
         }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return ReadPaging(connectionString, commandType, commandText, columnPrefix, null); }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
-            Tuple<string, string, string> t = null;
-            try { t = GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = GetTableAttributes();
             return ReadPaging(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
         }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)

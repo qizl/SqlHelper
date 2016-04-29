@@ -22,9 +22,7 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <returns></returns>
         public T Get<T>(object id)
         {
-            Tuple<string, string, string> t = null;
-            try { t = SqlHelper<T>.GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = SqlHelper<T>.GetTableAttributes();
 
             StringBuilder sqlStr = new StringBuilder();
             sqlStr.AppendFormat("SELECT * FROM {0} WHERE {1}{2}=@{2}", t.Item1, t.Item3, t.Item2);
@@ -135,9 +133,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public int Delete<T>(object id)
         {
-            Tuple<string, string, string> t = null;
-            try { t = SqlHelper<T>.GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = SqlHelper<T>.GetTableAttributes();
 
             StringBuilder sqlStr = new StringBuilder();
             sqlStr.AppendFormat("DELETE FROM {0} WHERE {1}{2}=@{2}", t.Item1, t.Item3, t.Item2);
