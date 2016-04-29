@@ -275,6 +275,56 @@ namespace Com.EnjoyCodes.SqlHelper
                 }
                 catch { }
         }
+        private static void fill(T obj, List<PropertyInfo> fkProperties, IDataReader dr, string columnPrefix)
+        {
+            string modelName = dr[0].ToString();
+            List<PropertyInfo> properties = null;
+
+            if (typeof(T).Name == modelName)
+            {
+                properties = typeof(T).GetProperties().ToList();
+            }
+            else
+            {
+                PropertyInfo property = fkProperties.First(f => f.PropertyType.IsGenericType ? f.PropertyType.GenericTypeArguments[0].Name == modelName : f.PropertyType.Name == modelName);
+                Type type = null;
+                string fullName = string.Empty;
+                if (property.PropertyType.IsGenericType)
+                {
+                    type = property.PropertyType.GenericTypeArguments[0];
+                    fullName = property.PropertyType.GenericTypeArguments[0].FullName;
+                }
+                else
+                {
+                    type = property.PropertyType;
+                    fullName = property.PropertyType.FullName;
+                }
+
+                var detail = Assembly.GetAssembly(type).CreateInstance(fullName);
+                PropertyInfo tProperty = typeof(T).GetProperty(property.Name);
+                if (tProperty.PropertyType.IsGenericType)
+                {
+                    if (tProperty.GetValue(obj) == null)
+                    {
+                        var emptyList = Assembly.GetAssembly(tProperty.PropertyType).CreateInstance(tProperty.PropertyType.FullName);
+                        tProperty.SetValue(obj, emptyList);
+                    }
+                    // TODO: 取集合元素
+                }
+                else
+                {
+                    properties = tProperty.PropertyType.GetProperties().ToList();
+                }
+            }
+
+            foreach (var item in properties)
+                try
+                {
+                    object v = dr[columnPrefix + item.Name];
+                    if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType), null);
+                }
+                catch { }
+        }
 
         /// <summary>
         /// 将一个对象转换为指定类型
@@ -352,14 +402,14 @@ namespace Com.EnjoyCodes.SqlHelper
         /// 获取模型属性
         /// </summary>
         /// <returns>表名、主键、前缀</returns>
-        public static Tuple<string, string, string> GetTableAttributes()
+        public static Tuple<string, string, string> GetTableAttributes(Type type)
         {
             string tableName = string.Empty;
             string prefix = string.Empty;
             string key = string.Empty;
 
             // 表属性
-            TableAttribute tableAttribute = (TableAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(TableAttribute));
+            TableAttribute tableAttribute = (TableAttribute)Attribute.GetCustomAttribute(type, typeof(TableAttribute));
             if (tableAttribute != null)
             {
                 tableName = tableAttribute.Name;
@@ -367,11 +417,11 @@ namespace Com.EnjoyCodes.SqlHelper
             }
             else
             {
-                tableName = typeof(T).Name;
+                tableName = type.Name;
             }
 
             // 主键
-            PropertyInfo[] properties = typeof(T).GetProperties();
+            PropertyInfo[] properties = type.GetProperties();
             foreach (var item in properties)
             {
                 object attr = item.GetCustomAttribute(typeof(Attribute), true);
@@ -384,12 +434,29 @@ namespace Com.EnjoyCodes.SqlHelper
 
             return Tuple.Create<string, string, string>(tableName, key, prefix);
         }
+
+        /// <summary>
+        /// 获取模型的外键属性
+        /// </summary>
+        /// <returns></returns>
+        public static List<PropertyInfo> GetForeignKeyProperties(Type type)
+        {
+            List<PropertyInfo> fKProperties = new List<PropertyInfo>();
+            PropertyInfo[] properties = type.GetProperties();
+            foreach (var item in properties)
+            {
+                object attr = item.GetCustomAttribute(typeof(Attribute), true);
+                if (attr is ForeignKeyAttribute)
+                    fKProperties.Add(item);
+            }
+            return fKProperties;
+        }
         #endregion
 
         #region Table Handler
         public static int CreateTable(string connectionString)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return CreateTable(connectionString, t.Item1, t.Item2, t.Item3);
         }
         public static int CreateTable(string connectionString, string modelTableName, string modelPrimaryKey, string columnPrefix)
@@ -432,7 +499,7 @@ namespace Com.EnjoyCodes.SqlHelper
         #region CRUD,List&Page
         public static object Create(string connectionString, T model)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return Create(connectionString, model, t.Item1, t.Item2, t.Item3);
         }
         /// <summary>
@@ -515,16 +582,45 @@ namespace Com.EnjoyCodes.SqlHelper
             return primaryKeyValue;
         }
 
+        /// <summary>
+        /// 级联查询
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="sqlWhere"></param>
+        /// <returns></returns>
+        public static T Read(string connectionString, string sqlWhere)
+        {
+            if (!string.IsNullOrEmpty(sqlWhere))
+                sqlWhere = "WHERE " + sqlWhere;
+            StringBuilder sqlStr = new StringBuilder();
+
+            // 主表sql
+            Tuple<string, string, string> t0 = GetTableAttributes(typeof(T));
+            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} {2};", typeof(T).Name, t0.Item1, sqlWhere);
+
+            // 关联表sql
+            List<PropertyInfo> fKProperties = GetForeignKeyProperties(typeof(T));
+            if (fKProperties.Count > 0)
+                foreach (var item in fKProperties)
+                {
+                    ForeignKeyAttribute fk = (ForeignKeyAttribute)item.GetCustomAttribute(typeof(ForeignKeyAttribute), true);
+                    Type type = item.PropertyType.IsGenericType ? item.PropertyType.GenericTypeArguments[0] : item.PropertyType;
+                    Tuple<string, string, string> t1 = GetTableAttributes(type);
+                    sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                }
+
+            return Read(connectionString, CommandType.Text, sqlStr.ToString());
+        }
         public static T Read(string connectionString, CommandType commandType, string commandText)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return Read(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
         }
         public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return Read(connectionString, commandType, commandText, columnPrefix, null); }
         public static T Read(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return Read(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
         }
         public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
@@ -562,21 +658,33 @@ namespace Com.EnjoyCodes.SqlHelper
         private static T read(IDataReader dr, string columnPrefix)
         {
             var result = Activator.CreateInstance<T>();
-            if (dr.Read())
-                fill(result, dr, columnPrefix);
+            List<PropertyInfo> fkProperties = GetForeignKeyProperties(typeof(T));
+            if (fkProperties.Count > 0)
+            {
+                while (dr.Read())
+                    fill(result, fkProperties, dr, columnPrefix);
+                while (dr.NextResult())
+                    while (dr.Read())
+                        fill(result, fkProperties, dr, columnPrefix);
+            }
+            else
+            {
+                if (dr.Read())
+                    fill(result, dr, columnPrefix);
+            }
             return result;
         }
 
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return ReadList(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
         }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return ReadList(connectionString, commandType, commandText, columnPrefix, null); }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return ReadList(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
         }
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
@@ -625,7 +733,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public static Pager<T> ReadPaging(string connectionString, int pageNumber, int pageSize)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return ReadPaging(connectionString, pageNumber, pageSize, string.Empty, string.Empty, t.Item1, string.Empty, t.Item3 + t.Item2);
         }
         /// <summary/>
@@ -659,14 +767,14 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return ReadPaging(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, null);
         }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix)
         { return ReadPaging(connectionString, commandType, commandText, columnPrefix, null); }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return ReadPaging(connectionString, commandType, commandText, t == null ? string.Empty : t.Item3, commandParameters);
         }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
@@ -714,7 +822,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
         public static int Update(string connectionString, T model)
         {
-            Tuple<string, string, string> t = GetTableAttributes();
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return Update(connectionString, model, t.Item1, t.Item2, t.Item3);
         }
         /// <summary>
