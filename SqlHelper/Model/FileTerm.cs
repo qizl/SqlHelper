@@ -20,7 +20,7 @@ namespace Com.EnjoyCodes.Model
         public int Amounts { get; set; }
         public Types Type { get; set; }
 
-        [ForeignKey("ID")]
+        [ForeignKey("FileTermID")]
         public virtual List<FileTermDetail> Details { get; set; }
     }
 }
