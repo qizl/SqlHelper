@@ -90,8 +90,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                        case "Com.EnjoyCodes.SqlHelper":
-                        default: key = "MSSQLConnectionString"; break;
+                    case "Com.EnjoyCodes.SqlHelper":
+                    default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -642,7 +642,7 @@ namespace Com.EnjoyCodes.SqlHelper
             sqlStr.AppendFormat("SELECT COUNT(1) FROM {0} {1}", sqlFrom, string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere));
             sqlStr.AppendFormat("SELECT * FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, * FROM {2} {3}) F WHERE F.ROWINDEX BETWEEN {4} AND {5}", pageNumber * pageSize, string.IsNullOrEmpty(sqlOrderBy.Trim()) ? "ID" : sqlOrderBy, sqlFrom, string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere), (pageNumber - 1) * pageSize + 1, pageNumber * pageSize);
 
-            Pager<T> result = SqlHelper<T>.ReadPaging(connectionstring, CommandType.Text, sqlStr.ToString());
+            Pager<T> result = ReadPaging(connectionstring, CommandType.Text, sqlStr.ToString());
             result.PageNumber = pageNumber;
             result.PageSize = pageSize;
 
