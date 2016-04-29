@@ -22,9 +22,7 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <returns></returns>
         public T Get<T>(object id)
         {
-            Tuple<string, string, string> t = null;
-            try { t = SqlHelper<T>.GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = SqlHelper<T>.GetTableAttributes(typeof(T));
 
             StringBuilder sqlStr = new StringBuilder();
             sqlStr.AppendFormat("SELECT * FROM {0} WHERE {1}{2}=@{2}", t.Item1, t.Item3, t.Item2);
@@ -45,19 +43,7 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="id"></param>
         /// <returns></returns>
         public FileTerm Get(Guid id)
-        {
-            StringBuilder sqlStr = new StringBuilder();
-            sqlStr.AppendFormat("SELECT * FROM FILETERMS WHERE FT_ID='{0}';SELECT * FROM FILETERMDETAILS WHERE FTD_FILETERMID='{0}';", id);
-            DataSet ds = SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr.ToString());
-
-            StringBuilder sb = new StringBuilder();
-            foreach (DataTable dt in ds.Tables)
-                foreach (DataRow dr in dt.Rows)
-                    for (int i = 0; i < dt.Columns.Count; i++)
-                        sb.Append(dr[i].ToString());
-
-            return null;
-        }
+        { return SqlHelper<FileTerm>.Read(SqlHelper.GetConnectionString_RW(this.GetType()), string.Format("ft_ID='{0}'", id)); }
 
         /// <summary>
         /// 查询数据集
@@ -128,16 +114,14 @@ namespace Com.EnjoyCodes.SqlHelper
         { return SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr); }
 
         public List<T> ReadList<T>()
-        { return SqlHelper<T>.ReadList(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, string.Format("SELECT * FROM {0}", SqlHelper<T>.GetTableAttributes().Item1)); }
+        { return SqlHelper<T>.ReadList(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, string.Format("SELECT * FROM {0}", SqlHelper<T>.GetTableAttributes(typeof(T)).Item1)); }
 
         public int Update<T>(T t)
         { return SqlHelper<T>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), t); }
 
         public int Delete<T>(object id)
         {
-            Tuple<string, string, string> t = null;
-            try { t = SqlHelper<T>.GetTableAttributes(); }
-            catch { }
+            Tuple<string, string, string> t = SqlHelper<T>.GetTableAttributes(typeof(T));
 
             StringBuilder sqlStr = new StringBuilder();
             sqlStr.AppendFormat("DELETE FROM {0} WHERE {1}{2}=@{2}", t.Item1, t.Item3, t.Item2);
