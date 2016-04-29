@@ -1,13 +1,10 @@
 ﻿using Com.EnjoyCodes.SqlAttribute;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Com.EnjoyCodes.Model
 {
-    [Table(Name = "FileTerms", Prefix = "ft_")]
+    [Table(Name = "FileTerm1s", Prefix = "ft_")]
     public class FileTerm
     {
         [Key]

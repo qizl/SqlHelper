@@ -7,7 +7,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Com.EnjoyCodes.SqlHelper
 {
@@ -278,19 +277,29 @@ namespace Com.EnjoyCodes.SqlHelper
         private static void fill(T obj, List<PropertyInfo> fkProperties, IDataReader dr, string columnPrefix)
         {
             string modelName = dr[0].ToString();
-            List<PropertyInfo> properties = null;
 
             if (typeof(T).Name == modelName)
             {
-                properties = typeof(T).GetProperties().ToList();
+                // 主表赋值
+                List<PropertyInfo> properties = typeof(T).GetProperties().ToList();
+
+                foreach (var item in properties)
+                    try
+                    {
+                        object v = dr[columnPrefix + item.Name];
+                        if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType));
+                    }
+                    catch { }
             }
             else
             {
+                // 关联表赋值
                 PropertyInfo property = fkProperties.First(f => f.PropertyType.IsGenericType ? f.PropertyType.GenericTypeArguments[0].Name == modelName : f.PropertyType.Name == modelName);
                 Type type = null;
                 string fullName = string.Empty;
                 if (property.PropertyType.IsGenericType)
                 {
+                    // 泛型
                     type = property.PropertyType.GenericTypeArguments[0];
                     fullName = property.PropertyType.GenericTypeArguments[0].FullName;
                 }
@@ -300,30 +309,48 @@ namespace Com.EnjoyCodes.SqlHelper
                     fullName = property.PropertyType.FullName;
                 }
 
-                var detail = Assembly.GetAssembly(type).CreateInstance(fullName);
-                PropertyInfo tProperty = typeof(T).GetProperty(property.Name);
+                columnPrefix = GetTableAttributes(type).Item3; // 获取关联表的字段前缀
+
+                var detail = Assembly.GetAssembly(type).CreateInstance(fullName); // 创建关联表的空对象
+                PropertyInfo tProperty = typeof(T).GetProperty(property.Name); // 获取关联表的属性
+
                 if (tProperty.PropertyType.IsGenericType)
                 {
-                    if (tProperty.GetValue(obj) == null)
+                    /*
+                     * 泛型
+                     *  向泛型中添加新元素
+                     */
+                    var details = tProperty.GetValue(obj);
+                    if (details == null)
                     {
-                        var emptyList = Assembly.GetAssembly(tProperty.PropertyType).CreateInstance(tProperty.PropertyType.FullName);
-                        tProperty.SetValue(obj, emptyList);
+                        // 初始化泛型对象
+                        details = Assembly.GetAssembly(tProperty.PropertyType).CreateInstance(tProperty.PropertyType.FullName);
+                        tProperty.SetValue(obj, details);
                     }
-                    // TODO: 取集合元素
+
+                    // 添加新元素
+                    MethodInfo mi = tProperty.PropertyType.GetMethod("Add");
+                    mi.Invoke(details, new object[] { detail });
                 }
                 else
                 {
-                    properties = tProperty.PropertyType.GetProperties().ToList();
+                    /*
+                     * 非泛型
+                     *  关联表赋值给主表
+                     */
+                    tProperty.SetValue(obj, detail);
                 }
-            }
 
-            foreach (var item in properties)
-                try
-                {
-                    object v = dr[columnPrefix + item.Name];
-                    if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType), null);
-                }
-                catch { }
+                // 反射取值
+                PropertyInfo[] properties = type.GetProperties();
+                foreach (var item in properties)
+                    try
+                    {
+                        object v = dr[columnPrefix + item.Name];
+                        if (v != null) item.SetValue(detail, convertObject(v, item.PropertyType));
+                    }
+                    catch { }
+            }
         }
 
         /// <summary>
