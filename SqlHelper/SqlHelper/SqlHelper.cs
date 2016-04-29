@@ -631,18 +631,35 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
+
         public static Pager<T> ReadPaging(string connectionString, int pageNumber, int pageSize)
         {
             Tuple<string, string, string> t = GetTableAttributes();
-            return ReadPaging(connectionString, pageNumber, pageSize, t.Item1, string.Empty, t.Item3 + t.Item2);
+            return ReadPaging(connectionString, pageNumber, pageSize, string.Empty, string.Empty, t.Item1, string.Empty, t.Item3 + t.Item2);
         }
-        public static Pager<T> ReadPaging(string connectionstring, int pageNumber, int pageSize, string sqlFrom, string sqlWhere, string sqlOrderBy)
+        /// <summary/>
+        /// <param name="connectionstring"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="sqlPre">Count之前的DECLARE等Sql</param>
+        /// <param name="sqlFields">查询结果字段</param>
+        /// <param name="sqlFrom"></param>
+        /// <param name="sqlWhere"></param>
+        /// <param name="sqlOrderBy"></param>
+        public static Pager<T> ReadPaging(string connectionstring, int pageNumber, int pageSize, string sqlPre, string sqlFields, string sqlFrom, string sqlWhere, string sqlOrderBy)
         {
-            StringBuilder sqlStr = new StringBuilder();
-            sqlStr.AppendFormat("SELECT COUNT(1) FROM {0} {1}", sqlFrom, string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere));
-            sqlStr.AppendFormat("SELECT * FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, * FROM {2} {3}) F WHERE F.ROWINDEX BETWEEN {4} AND {5}", pageNumber * pageSize, string.IsNullOrEmpty(sqlOrderBy.Trim()) ? "ID" : sqlOrderBy, sqlFrom, string.IsNullOrEmpty(sqlWhere.Trim()) ? "" : ("WHERE " + sqlWhere), (pageNumber - 1) * pageSize + 1, pageNumber * pageSize);
+            if (string.IsNullOrEmpty(sqlFields))
+                sqlFields = "*";
+            if (!string.IsNullOrEmpty(sqlWhere))
+                sqlWhere = "WHERE " + sqlWhere;
 
-            Pager<T> result = SqlHelper<T>.ReadPaging(connectionstring, CommandType.Text, sqlStr.ToString());
+            StringBuilder sqlStr = new StringBuilder();
+            if (!string.IsNullOrEmpty(sqlPre))
+                sqlStr.AppendFormat("{0}", sqlPre);
+            sqlStr.AppendFormat("SELECT COUNT(1) FROM {0} {1}", sqlFrom, sqlWhere);
+            sqlStr.AppendFormat("SELECT * FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, {2} FROM {3} {4}) F WHERE F.ROWINDEX BETWEEN {5} AND {6}", pageNumber * pageSize, sqlOrderBy, sqlFields, sqlFrom, sqlWhere, (pageNumber - 1) * pageSize + 1, pageNumber * pageSize);
+
+            Pager<T> result = ReadPaging(connectionstring, CommandType.Text, sqlStr.ToString());
             result.PageNumber = pageNumber;
             result.PageSize = pageSize;
 
