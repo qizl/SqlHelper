@@ -620,16 +620,18 @@ namespace Com.EnjoyCodes.SqlHelper
 
             // 关联表sql
             List<PropertyInfo> fKProperties = GetForeignKeyProperties(typeof(T));
+            PropertyInfo[] tProperties = typeof(T).GetProperties();
             if (fKProperties.Count > 0)
                 foreach (var item in fKProperties)
                 {
-                    ForeignKeyAttribute fk = (ForeignKeyAttribute)item.GetCustomAttribute(typeof(ForeignKeyAttribute), true);
-                    Type type = null;
+                    ForeignKeyAttribute fk = (ForeignKeyAttribute)item.GetCustomAttribute(typeof(ForeignKeyAttribute), true); // 外键属性
+                    Type type = null; // 外表类型
                     if (item.PropertyType.IsGenericType)
                     {
                         /*
                          * 泛型
                          *  一对多查询
+                         *  主表主键与外表字段关联
                          */
                         type = item.PropertyType.GenericTypeArguments[0];
                         Tuple<string, string, string> t1 = GetTableAttributes(type);
@@ -643,7 +645,16 @@ namespace Com.EnjoyCodes.SqlHelper
                          */
                         type = item.PropertyType;
                         Tuple<string, string, string> t1 = GetTableAttributes(type);
-                        sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + t1.Item2, t0.Item3 + fk.Name, t0.Item1, sqlWhere);
+                        if (tProperties.FirstOrDefault(f => f.Name == fk.Name) != null)
+                        {
+                            // 主表字段与外表主键关联
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + t1.Item2, t0.Item3 + fk.Name, t0.Item1, sqlWhere);
+                        }
+                        else
+                        {
+                            // 主表主键与外表字段关联
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                        }
                     }
                 }
 
