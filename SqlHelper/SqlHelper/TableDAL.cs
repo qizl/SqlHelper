@@ -114,7 +114,7 @@ namespace Com.EnjoyCodes.SqlHelper
         { return SqlHelper.ExecuteDataSet(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, sqlStr); }
 
         public List<T> ReadList<T>()
-        { return SqlHelper<T>.ReadList(SqlHelper.GetConnectionString_RW(this.GetType()), CommandType.Text, string.Format("SELECT * FROM {0}", SqlHelper<T>.GetTableAttributes(typeof(T)).Item1)); }
+        { return SqlHelper<T>.ReadList(SqlHelper.GetConnectionString_RW(this.GetType())); }
 
         public int Update<T>(T t)
         { return SqlHelper<T>.Update(SqlHelper.GetConnectionString_RW(this.GetType()), t); }

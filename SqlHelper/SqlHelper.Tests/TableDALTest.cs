@@ -141,7 +141,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void ReadListT()
-        { var result = this._fileDAL.ReadList<CTest>(); }
+        { var result = this._fileDAL.ReadList<FileTerm>(); }
 
         [TestMethod]
         public void Update()

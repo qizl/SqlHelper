@@ -274,76 +274,74 @@ namespace Com.EnjoyCodes.SqlHelper
                 }
                 catch { }
         }
-        private static void fill(T obj, List<PropertyInfo> fkProperties, IDataReader dr, string columnPrefix)
+        private static void fill(T obj, IDataReader dr, List<PropertyInfo> fkProperties)
         {
             string modelColumnName = dr.GetName(0).ToString();
-            string modelName = dr[0].ToString();
+            string modelName = dr["MODELNAME"].ToString();
 
-            if (modelColumnName.ToUpper() != "MODELNAME" || typeof(T).Name == modelName)
+            // 关联表赋值
+            PropertyInfo property = fkProperties.First(f => f.PropertyType.IsGenericType ? f.PropertyType.GenericTypeArguments[0].Name == modelName : f.PropertyType.Name == modelName);
+            Type type = null;
+            string fullName = string.Empty;
+            if (property.PropertyType.IsGenericType)
             {
-                // 主表赋值
-                fill(obj, dr, columnPrefix);
+                // 泛型
+                type = property.PropertyType.GenericTypeArguments[0];
+                fullName = property.PropertyType.GenericTypeArguments[0].FullName;
             }
             else
             {
-                // 关联表赋值
-                PropertyInfo property = fkProperties.First(f => f.PropertyType.IsGenericType ? f.PropertyType.GenericTypeArguments[0].Name == modelName : f.PropertyType.Name == modelName);
-                Type type = null;
-                string fullName = string.Empty;
-                if (property.PropertyType.IsGenericType)
-                {
-                    // 泛型
-                    type = property.PropertyType.GenericTypeArguments[0];
-                    fullName = property.PropertyType.GenericTypeArguments[0].FullName;
-                }
-                else
-                {
-                    type = property.PropertyType;
-                    fullName = property.PropertyType.FullName;
-                }
-
-                columnPrefix = GetTableAttributes(type).Item3; // 获取关联表的字段前缀
-
-                var detail = Assembly.GetAssembly(type).CreateInstance(fullName); // 创建关联表的空对象
-                PropertyInfo tProperty = typeof(T).GetProperty(property.Name); // 获取关联表的属性
-
-                if (tProperty.PropertyType.IsGenericType)
-                {
-                    /*
-                     * 泛型
-                     *  向泛型中添加新元素
-                     */
-                    var details = tProperty.GetValue(obj);
-                    if (details == null)
-                    {
-                        // 初始化泛型对象
-                        details = Assembly.GetAssembly(tProperty.PropertyType).CreateInstance(tProperty.PropertyType.FullName);
-                        tProperty.SetValue(obj, details);
-                    }
-
-                    // 添加新元素
-                    MethodInfo methodInfo = tProperty.PropertyType.GetMethod("Add");
-                    methodInfo.Invoke(details, new object[] { detail });
-                }
-                else
-                {
-                    /*
-                     * 非泛型
-                     *  关联表赋值给主表
-                     */
-                    tProperty.SetValue(obj, detail);
-                }
-
-                // 反射取值
-                PropertyInfo[] properties = type.GetProperties();
-                foreach (var item in properties)
-                    try
-                    {
-                        object v = dr[columnPrefix + item.Name];
-                        if (v != null) item.SetValue(detail, convertObject(v, item.PropertyType));
-                    }
-                    catch { }
+                type = property.PropertyType;
+                fullName = property.PropertyType.FullName;
             }
+
+            string columnPrefix = GetTableAttributes(type).Item3; // 获取关联表的字段前缀
+            var detail = Assembly.GetAssembly(type).CreateInstance(fullName); // 创建关联表的空对象
+            PropertyInfo tProperty = typeof(T).GetProperty(property.Name); // 获取关联表的属性
+
+            if (tProperty.PropertyType.IsGenericType)
+            {
+                /*
+                 * 泛型
+                 *  向泛型中添加新元素
+                 */
+                var details = tProperty.GetValue(obj);
+                if (details == null)
+                {
+                    // 初始化泛型对象
+                    details = Assembly.GetAssembly(tProperty.PropertyType).CreateInstance(tProperty.PropertyType.FullName);
+                    tProperty.SetValue(obj, details);
+                }
+
+                // 添加新元素
+                MethodInfo methodInfo = tProperty.PropertyType.GetMethod("Add");
+                methodInfo.Invoke(details, new object[] { detail });
+            }
+            else
+            {
+                /*
+                 * 非泛型
+                 *  关联表赋值给主表
+                 */
+                tProperty.SetValue(obj, detail);
+            }
+
+            // 反射取值
+            PropertyInfo[] properties = type.GetProperties();
+            foreach (var item in properties)
+                try
+                {
+                    object v = dr[columnPrefix + item.Name];
+                    if (v != null) item.SetValue(detail, convertObject(v, item.PropertyType));
+                }
+                catch { }
+        }
+        private static void fill(List<T> objs, IDataReader dr, PropertyInfo pkProperty, List<PropertyInfo> fkProperties)
+        {
+            string pk = dr["PK"].ToString();
+
+            T obj = objs.First(f => pkProperty.GetValue(f).ToString() == pk);
+            fill(obj, dr, fkProperties);
         }
 
         /// <summary>
@@ -486,7 +484,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
             // 主表sql
             Tuple<string, string, string> t0 = GetTableAttributes(typeof(T));
-            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} {2};", typeof(T).Name, t0.Item1, sqlWhere);
+            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,{1} PK,* FROM {2} {3};", typeof(T).Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
 
             // 关联表sql
             List<PropertyInfo> fKProperties = GetForeignKeyProperties(typeof(T));
@@ -505,7 +503,7 @@ namespace Com.EnjoyCodes.SqlHelper
                          */
                         type = item.PropertyType.GenericTypeArguments[0];
                         Tuple<string, string, string> t1 = GetTableAttributes(type);
-                        sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                        sqlStr.AppendFormat("SELECT '{0}' MODELNAME,{2} PK,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
                     }
                     else
                     {
@@ -518,12 +516,12 @@ namespace Com.EnjoyCodes.SqlHelper
                         if (tProperties.FirstOrDefault(f => f.Name == fk.Name) != null)
                         {
                             // 主表字段与外表主键关联
-                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + t1.Item2, t0.Item3 + fk.Name, t0.Item1, sqlWhere);
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,{1}.{2} PK,{3}.* FROM {3} RIGHT JOIN {1} ON {3}.{4}={1}.{5} WHERE {3}.{4} IN(SELECT {5} FROM {1} {6});", type.Name, t0.Item1, t0.Item3 + t0.Item2, t1.Item1, t1.Item3 + t1.Item2, t0.Item3 + fk.Name, sqlWhere);
                         }
                         else
                         {
                             // 主表主键与外表字段关联
-                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,{2} PK,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
                         }
                     }
                 }
@@ -684,49 +682,23 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         public static T Read(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
-            T result;
-            using (SqlConnection cn = new SqlConnection(connectionString))
-            {
-                SqlCommand cmd = cn.CreateCommand();
-                cmd.CommandText = commandText;
-                cmd.CommandType = commandType;
-                if (commandParameters != null)
-                    cmd.Parameters.AddRange(commandParameters);
-                cn.Open();
-                try
-                {
-                    using (SqlDataReader sdr = cmd.ExecuteReader())
-                    {
-                        result = read(sdr, columnPrefix);
-                        sdr.Close();
-                        sdr.Dispose();
-                    }
-                    cmd.Parameters.Clear();
-                    cn.Close();
-                    cn.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    cn.Close();
-                    cn.Dispose();
-                    throw ex;
-                }
-            }
-            return result;
-        }
-        private static T read(IDataReader dr, string columnPrefix)
-        {
-            var result = Activator.CreateInstance<T>();
-            List<PropertyInfo> fkProperties = GetForeignKeyProperties(typeof(T));
-
-            while (dr.Read())
-                fill(result, fkProperties, dr, columnPrefix);
-            while (dr.NextResult())
-                while (dr.Read())
-                    fill(result, fkProperties, dr, columnPrefix);
+            T result = default(T);
+            List<T> rList = ReadList(connectionString, commandType, commandText, columnPrefix, commandParameters);
+            if (rList.Count > 0)
+                result = rList[0];
 
             return result;
         }
+
+        /// <summary>
+        /// 级联查询
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <returns></returns
+        public static List<T> ReadList(string connectionString)
+        { return ReadList(connectionString, string.Empty); }
+        public static List<T> ReadList(string connectionString, string sqlWhere)
+        { return ReadList(connectionString, CommandType.Text, GetReadString(sqlWhere)); }
 
         public static List<T> ReadList(string connectionString, CommandType commandType, string commandText)
         {
@@ -774,7 +746,7 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         private static List<T> readList(IDataReader dr, string columnPrefix)
         {
-            // TODO:多表级联查询
+            // 读主表数据
             var result = new List<T>();
             while (dr.Read())
             {
@@ -782,6 +754,18 @@ namespace Com.EnjoyCodes.SqlHelper
                 fill(obj, dr, columnPrefix);
                 result.Add(obj);
             }
+
+            /*
+             * 读关联表数据
+             *  主表需指定外键
+             */
+            List<PropertyInfo> fkProperties = GetForeignKeyProperties(typeof(T));
+            PropertyInfo pkProperty = typeof(T).GetProperty(GetTableAttributes(typeof(T)).Item2);
+            if (fkProperties.Count > 0)
+                while (dr.NextResult())
+                    while (dr.Read())
+                        fill(result, dr, pkProperty, fkProperties);
+
             return result;
         }
 
