@@ -36,7 +36,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         [TestMethod]
         public void CreateTable()
         {
-            //this._fileDAL.CreateTable<FileTerm>();
+            this._fileDAL.CreateTable<FileTerm>();
             this._fileDAL.CreateTable<Genre>();
             //this._fileDAL.CreateTable<FileTermDetail>();
             //this._fileDAL.CreateTable<TIdentity>();
@@ -87,10 +87,12 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         public void AddByAttribute()
         {
             Guid id = Guid.NewGuid();
-            var result = this._fileDAL.Add<FileTerm>(new FileTerm() { ID = id, Title = "LJAFLJAL", CreateTime = DateTime.Now });
-            this._fileDAL.Add(new FileTermDetail() { FileTermID = id, Name = "D1", CreateTime = DateTime.Now });
-            this._fileDAL.Add(new FileTermDetail() { FileTermID = id, Name = "D2", CreateTime = DateTime.Now });
-            this._fileDAL.Add(new FileTermDetail() { FileTermID = id, Name = "D3", CreateTime = DateTime.Now });
+            Genre genre = new Genre() { ID = Guid.NewGuid(), Name = "G2" };
+            this._fileDAL.Add(genre);
+            this._fileDAL.Add(new FileTerm() { ID = id, GenreID = genre.ID, Title = "DFGHJKLw", CreateTime = DateTime.Now });
+            this._fileDAL.Add(new FileTermDetail() { FileTermID = id, Name = "D4", CreateTime = DateTime.Now });
+            this._fileDAL.Add(new FileTermDetail() { FileTermID = id, Name = "D5", CreateTime = DateTime.Now });
+            this._fileDAL.Add(new FileTermDetail() { FileTermID = id, Name = "D6", CreateTime = DateTime.Now });
         }
 
         [TestMethod]
@@ -131,7 +133,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void Get()
-        { var result = this._fileDAL.Get(Guid.Parse("AAC1F9E5-566E-400F-9555-FF3441ED979E")); }
+        { var result = this._fileDAL.Get(Guid.Parse("EFA55A41-3DAF-4B82-A394-7232FD2E29CB")); }
 
         [TestMethod]
         public void GetPaging()

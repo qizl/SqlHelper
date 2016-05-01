@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                        case "Com.EnjoyCodes.SqlHelper":
-                        default: key = "MSSQLConnectionString"; break;
+                    case "Com.EnjoyCodes.SqlHelper":
+                    default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -471,6 +471,65 @@ namespace Com.EnjoyCodes.SqlHelper
             }
             return fKProperties;
         }
+
+        /// <summary>
+        /// 获取查询字符串
+        ///     主外表两级查询
+        /// </summary>
+        /// <param name="sqlWhere"></param>
+        /// <returns></returns>
+        public static string GetReadString(string sqlWhere)
+        {
+            if (!string.IsNullOrEmpty(sqlWhere))
+                sqlWhere = "WHERE " + sqlWhere;
+            StringBuilder sqlStr = new StringBuilder();
+
+            // 主表sql
+            Tuple<string, string, string> t0 = GetTableAttributes(typeof(T));
+            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} {2};", typeof(T).Name, t0.Item1, sqlWhere);
+
+            // 关联表sql
+            List<PropertyInfo> fKProperties = GetForeignKeyProperties(typeof(T));
+            PropertyInfo[] tProperties = typeof(T).GetProperties();
+            if (fKProperties.Count > 0)
+                foreach (var item in fKProperties)
+                {
+                    ForeignKeyAttribute fk = (ForeignKeyAttribute)item.GetCustomAttribute(typeof(ForeignKeyAttribute), true); // 外键属性
+                    Type type = null; // 外表类型
+                    if (item.PropertyType.IsGenericType)
+                    {
+                        /*
+                         * 泛型
+                         *  一对多查询
+                         *  主表主键与外表字段关联
+                         */
+                        type = item.PropertyType.GenericTypeArguments[0];
+                        Tuple<string, string, string> t1 = GetTableAttributes(type);
+                        sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                    }
+                    else
+                    {
+                        /*
+                         * 非泛型
+                         *  一对一查询
+                         */
+                        type = item.PropertyType;
+                        Tuple<string, string, string> t1 = GetTableAttributes(type);
+                        if (tProperties.FirstOrDefault(f => f.Name == fk.Name) != null)
+                        {
+                            // 主表字段与外表主键关联
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + t1.Item2, t0.Item3 + fk.Name, t0.Item1, sqlWhere);
+                        }
+                        else
+                        {
+                            // 主表主键与外表字段关联
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                        }
+                    }
+                }
+
+            return sqlStr.ToString();
+        }
         #endregion
 
         #region Table Handler
@@ -609,57 +668,8 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="sqlWhere"></param>
         /// <returns></returns>
         public static T Read(string connectionString, string sqlWhere)
-        {
-            if (!string.IsNullOrEmpty(sqlWhere))
-                sqlWhere = "WHERE " + sqlWhere;
-            StringBuilder sqlStr = new StringBuilder();
+        { return Read(connectionString, CommandType.Text, GetReadString(sqlWhere)); }
 
-            // 主表sql
-            Tuple<string, string, string> t0 = GetTableAttributes(typeof(T));
-            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} {2};", typeof(T).Name, t0.Item1, sqlWhere);
-
-            // 关联表sql
-            List<PropertyInfo> fKProperties = GetForeignKeyProperties(typeof(T));
-            PropertyInfo[] tProperties = typeof(T).GetProperties();
-            if (fKProperties.Count > 0)
-                foreach (var item in fKProperties)
-                {
-                    ForeignKeyAttribute fk = (ForeignKeyAttribute)item.GetCustomAttribute(typeof(ForeignKeyAttribute), true); // 外键属性
-                    Type type = null; // 外表类型
-                    if (item.PropertyType.IsGenericType)
-                    {
-                        /*
-                         * 泛型
-                         *  一对多查询
-                         *  主表主键与外表字段关联
-                         */
-                        type = item.PropertyType.GenericTypeArguments[0];
-                        Tuple<string, string, string> t1 = GetTableAttributes(type);
-                        sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
-                    }
-                    else
-                    {
-                        /*
-                         * 非泛型
-                         *  一对一查询
-                         */
-                        type = item.PropertyType;
-                        Tuple<string, string, string> t1 = GetTableAttributes(type);
-                        if (tProperties.FirstOrDefault(f => f.Name == fk.Name) != null)
-                        {
-                            // 主表字段与外表主键关联
-                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + t1.Item2, t0.Item3 + fk.Name, t0.Item1, sqlWhere);
-                        }
-                        else
-                        {
-                            // 主表主键与外表字段关联
-                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
-                        }
-                    }
-                }
-
-            return Read(connectionString, CommandType.Text, sqlStr.ToString());
-        }
         public static T Read(string connectionString, CommandType commandType, string commandText)
         {
             Tuple<string, string, string> t = GetTableAttributes(typeof(T));
@@ -764,6 +774,7 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         private static List<T> readList(IDataReader dr, string columnPrefix)
         {
+            // TODO:多表级联查询
             var result = new List<T>();
             while (dr.Read())
             {
