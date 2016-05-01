@@ -36,8 +36,8 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         [TestMethod]
         public void CreateTable()
         {
-            this._fileDAL.CreateTable<FileTerm>();
-            this._fileDAL.CreateTable<Genre>();
+            //this._fileDAL.CreateTable<FileTerm>();
+            //this._fileDAL.CreateTable<Genre>();
             //this._fileDAL.CreateTable<FileTermDetail>();
             //this._fileDAL.CreateTable<TIdentity>();
             //this._fileDAL.CreateTable<CTest>();
@@ -137,7 +137,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void GetPaging()
-        { var fileTerms = this._fileDAL.GetPaging(2, 2); }
+        { var fileTerms = this._fileDAL.GetPaging<CTest>(3, 10); }
 
         [TestMethod]
         public void ReadListT()

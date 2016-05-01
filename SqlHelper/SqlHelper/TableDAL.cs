@@ -54,8 +54,8 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="sqlWhere"></param>
         /// <param name="sqlOrderBy"></param>
         /// <returns></returns>
-        public Pager<FileTerm> GetPaging(int pageNumber, int pageSize)
-        { return SqlHelper<FileTerm>.ReadPaging(SqlHelper.GetConnectionString_RW(this.GetType()), pageNumber, pageSize); }
+        public Pager<T> GetPaging<T>(int pageNumber, int pageSize)
+        { return SqlHelper<T>.ReadPaging(SqlHelper.GetConnectionString_RW(this.GetType()), pageNumber, pageSize); }
 
         /// <summary>
         /// 查询数据集

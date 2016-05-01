@@ -769,12 +769,23 @@ namespace Com.EnjoyCodes.SqlHelper
             return result;
         }
 
+        /// <summary>
+        /// 分页
+        ///     级联查询
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
         public static Pager<T> ReadPaging(string connectionString, int pageNumber, int pageSize)
         {
             Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             return ReadPaging(connectionString, pageNumber, pageSize, string.Empty, string.Empty, t.Item1, string.Empty, t.Item3 + t.Item2);
         }
-        /// <summary/>
+        /// <summary>
+        /// 分页
+        ///     级联查询
+        /// </summary>
         /// <param name="connectionstring"></param>
         /// <param name="pageNumber"></param>
         /// <param name="pageSize"></param>
@@ -783,20 +794,33 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="sqlFrom"></param>
         /// <param name="sqlWhere"></param>
         /// <param name="sqlOrderBy"></param>
+        /// <returns></returns>
         public static Pager<T> ReadPaging(string connectionstring, int pageNumber, int pageSize, string sqlPre, string sqlFields, string sqlFrom, string sqlWhere, string sqlOrderBy)
         {
+            // 查询参数处理
             if (string.IsNullOrEmpty(sqlFields))
                 sqlFields = "*";
             if (!string.IsNullOrEmpty(sqlWhere))
                 sqlWhere = "WHERE " + sqlWhere;
 
+            // 查询数据行数
             StringBuilder sqlStr = new StringBuilder();
             if (!string.IsNullOrEmpty(sqlPre))
                 sqlStr.AppendFormat("{0}", sqlPre);
-            sqlStr.AppendFormat("SELECT COUNT(1) FROM {0} {1}", sqlFrom, sqlWhere);
-            sqlStr.AppendFormat("SELECT * FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, {2} FROM {3} {4}) F WHERE F.ROWINDEX BETWEEN {5} AND {6}", pageNumber * pageSize, sqlOrderBy, sqlFields, sqlFrom, sqlWhere, (pageNumber - 1) * pageSize + 1, pageNumber * pageSize);
+            sqlStr.AppendFormat("SELECT COUNT(1) FROM {0} {1};", sqlFrom, sqlWhere);
 
-            Pager<T> result = ReadPaging(connectionstring, CommandType.Text, sqlStr.ToString());
+            /*
+             * 查询字符串
+             *  1.获取分页后的主键ID集合
+             *  2.拼接到级联查询字符串中
+             *  3.拼接到分页字符串中
+             */
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
+            string sqlIDs = string.Format("SELECT F.{7} FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, {2} FROM {3} {4}) F WHERE F.ROWINDEX BETWEEN {5} AND {6}", pageNumber * pageSize, sqlOrderBy, sqlFields, sqlFrom, sqlWhere, (pageNumber - 1) * pageSize + 1, pageNumber * pageSize, t.Item3 + t.Item2);
+            sqlStr.AppendFormat(GetReadString(string.Format("{0} IN({1})", t.Item3 + t.Item2, sqlIDs)));
+
+            // 执行查询
+            Pager<T> result = ReadPaging(connectionstring, CommandType.Text, sqlStr.ToString(), t.Item3, null);
             result.PageNumber = pageNumber;
             result.PageSize = pageSize;
 
@@ -832,15 +856,12 @@ namespace Com.EnjoyCodes.SqlHelper
                     {
                         if (sdr.Read())
                         {
+                            // 读数据行数
                             result.RecordCount = sdr.GetInt32(0);
-                            result.Datas = new List<T>();
+
+                            // 读分页数据
                             if (sdr.NextResult())
-                                while (sdr.Read())
-                                {
-                                    var obj = Activator.CreateInstance<T>();
-                                    fill(obj, sdr, columnPrefix);
-                                    result.Datas.Add(obj);
-                                }
+                                result.Datas = readList(sdr, columnPrefix);
                         }
                         sdr.Close();
                         sdr.Dispose();
