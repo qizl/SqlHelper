@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                    case "Com.EnjoyCodes.SqlHelper":
-                    default: key = "MSSQLConnectionString"; break;
+                        case "Com.EnjoyCodes.SqlHelper":
+                        default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -270,26 +270,19 @@ namespace Com.EnjoyCodes.SqlHelper
                 try
                 {
                     object v = dr[columnPrefix + item.Name];
-                    if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType), null);
+                    if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType));
                 }
                 catch { }
         }
         private static void fill(T obj, List<PropertyInfo> fkProperties, IDataReader dr, string columnPrefix)
         {
+            string modelColumnName = dr.GetName(0).ToString();
             string modelName = dr[0].ToString();
 
-            if (typeof(T).Name == modelName)
+            if (modelColumnName.ToUpper() != "MODELNAME" || typeof(T).Name == modelName)
             {
                 // 主表赋值
-                List<PropertyInfo> properties = typeof(T).GetProperties().ToList();
-
-                foreach (var item in properties)
-                    try
-                    {
-                        object v = dr[columnPrefix + item.Name];
-                        if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType));
-                    }
-                    catch { }
+                fill(obj, dr, columnPrefix);
             }
             else
             {
@@ -329,8 +322,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     }
 
                     // 添加新元素
-                    MethodInfo mi = tProperty.PropertyType.GetMethod("Add");
-                    mi.Invoke(details, new object[] { detail });
+                    MethodInfo methodInfo = tProperty.PropertyType.GetMethod("Add");
+                    methodInfo.Invoke(details, new object[] { detail });
                 }
                 else
                 {
@@ -627,13 +620,42 @@ namespace Com.EnjoyCodes.SqlHelper
 
             // 关联表sql
             List<PropertyInfo> fKProperties = GetForeignKeyProperties(typeof(T));
+            PropertyInfo[] tProperties = typeof(T).GetProperties();
             if (fKProperties.Count > 0)
                 foreach (var item in fKProperties)
                 {
-                    ForeignKeyAttribute fk = (ForeignKeyAttribute)item.GetCustomAttribute(typeof(ForeignKeyAttribute), true);
-                    Type type = item.PropertyType.IsGenericType ? item.PropertyType.GenericTypeArguments[0] : item.PropertyType;
-                    Tuple<string, string, string> t1 = GetTableAttributes(type);
-                    sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                    ForeignKeyAttribute fk = (ForeignKeyAttribute)item.GetCustomAttribute(typeof(ForeignKeyAttribute), true); // 外键属性
+                    Type type = null; // 外表类型
+                    if (item.PropertyType.IsGenericType)
+                    {
+                        /*
+                         * 泛型
+                         *  一对多查询
+                         *  主表主键与外表字段关联
+                         */
+                        type = item.PropertyType.GenericTypeArguments[0];
+                        Tuple<string, string, string> t1 = GetTableAttributes(type);
+                        sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} IN(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                    }
+                    else
+                    {
+                        /*
+                         * 非泛型
+                         *  一对一查询
+                         */
+                        type = item.PropertyType;
+                        Tuple<string, string, string> t1 = GetTableAttributes(type);
+                        if (tProperties.FirstOrDefault(f => f.Name == fk.Name) != null)
+                        {
+                            // 主表字段与外表主键关联
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + t1.Item2, t0.Item3 + fk.Name, t0.Item1, sqlWhere);
+                        }
+                        else
+                        {
+                            // 主表主键与外表字段关联
+                            sqlStr.AppendFormat("SELECT '{0}' MODELNAME,* FROM {1} WHERE {2} =(SELECT {3} FROM {4} {5});", type.Name, t1.Item1, t1.Item3 + fk.Name, t0.Item3 + t0.Item2, t0.Item1, sqlWhere);
+                        }
+                    }
                 }
 
             return Read(connectionString, CommandType.Text, sqlStr.ToString());
@@ -686,19 +708,13 @@ namespace Com.EnjoyCodes.SqlHelper
         {
             var result = Activator.CreateInstance<T>();
             List<PropertyInfo> fkProperties = GetForeignKeyProperties(typeof(T));
-            if (fkProperties.Count > 0)
-            {
+
+            while (dr.Read())
+                fill(result, fkProperties, dr, columnPrefix);
+            while (dr.NextResult())
                 while (dr.Read())
                     fill(result, fkProperties, dr, columnPrefix);
-                while (dr.NextResult())
-                    while (dr.Read())
-                        fill(result, fkProperties, dr, columnPrefix);
-            }
-            else
-            {
-                if (dr.Read())
-                    fill(result, dr, columnPrefix);
-            }
+
             return result;
         }
 

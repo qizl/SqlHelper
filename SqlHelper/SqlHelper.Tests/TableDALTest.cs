@@ -36,8 +36,9 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         [TestMethod]
         public void CreateTable()
         {
-            this._fileDAL.CreateTable<FileTerm>();
-            this._fileDAL.CreateTable<FileTermDetail>();
+            //this._fileDAL.CreateTable<FileTerm>();
+            this._fileDAL.CreateTable<Genre>();
+            //this._fileDAL.CreateTable<FileTermDetail>();
             //this._fileDAL.CreateTable<TIdentity>();
             //this._fileDAL.CreateTable<CTest>();
         }
@@ -130,7 +131,7 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void Get()
-        { var result = this._fileDAL.Get(Guid.Parse("C54AE2CD-3789-4D31-81E1-F4AEB79AE734")); }
+        { var result = this._fileDAL.Get(Guid.Parse("AAC1F9E5-566E-400F-9555-FF3441ED979E")); }
 
         [TestMethod]
         public void GetPaging()

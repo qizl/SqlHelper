@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Com.EnjoyCodes.Model
 {
-    [Table(Name = "FileTerm1s", Prefix = "ft_")]
+    [Table(Name = "FileTerms", Prefix = "ft_")]
     public class FileTerm
     {
         [Key]
@@ -19,5 +19,7 @@ namespace Com.EnjoyCodes.Model
 
         [ForeignKey("FileTermID")]
         public virtual List<FileTermDetail> Details { get; set; }
+        [ForeignKey("GenreID")]
+        public virtual Genre Genre { get; set; }
     }
 }
