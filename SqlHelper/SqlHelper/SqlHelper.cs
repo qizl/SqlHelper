@@ -104,9 +104,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
         #region ExecuteNonQuery
         public static int ExecuteNonQuery(string connectionString, CommandType commandType, string commandText)
-        {
-            return ExecuteNonQuery(connectionString, commandType, commandText, (SqlParameter[])null);
-        }
+        { return ExecuteNonQuery(connectionString, commandType, commandText, (SqlParameter[])null); }
 
         public static int ExecuteNonQuery(string connectionString, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
