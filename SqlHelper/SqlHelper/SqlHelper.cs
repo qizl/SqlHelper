@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                    case "Com.EnjoyCodes.SqlHelper":
-                    default: key = "MSSQLConnectionString"; break;
+                        case "Com.EnjoyCodes.SqlHelper":
+                        default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -778,10 +778,7 @@ namespace Com.EnjoyCodes.SqlHelper
         /// <param name="pageSize"></param>
         /// <returns></returns>
         public static Pager<T> ReadPaging(string connectionString, int pageNumber, int pageSize)
-        {
-            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
-            return ReadPaging(connectionString, pageNumber, pageSize, string.Empty, string.Empty, t.Item1, string.Empty, t.Item3 + t.Item2);
-        }
+        { return ReadPaging(connectionString, pageNumber, pageSize, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty); }
         /// <summary>
         /// 分页
         ///     级联查询
@@ -798,10 +795,15 @@ namespace Com.EnjoyCodes.SqlHelper
         public static Pager<T> ReadPaging(string connectionstring, int pageNumber, int pageSize, string sqlPre, string sqlFields, string sqlFrom, string sqlWhere, string sqlOrderBy)
         {
             // 查询参数处理
+            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             if (string.IsNullOrEmpty(sqlFields))
                 sqlFields = "*";
+            if (string.IsNullOrEmpty(sqlFrom))
+                sqlFrom = t.Item1;
             if (!string.IsNullOrEmpty(sqlWhere))
                 sqlWhere = "WHERE " + sqlWhere;
+            if (string.IsNullOrEmpty(sqlOrderBy))
+                sqlOrderBy = t.Item3 + t.Item2;
 
             // 查询数据行数
             StringBuilder sqlStr = new StringBuilder();
@@ -815,7 +817,6 @@ namespace Com.EnjoyCodes.SqlHelper
              *  2.拼接到级联查询字符串中
              *  3.拼接到分页字符串中
              */
-            Tuple<string, string, string> t = GetTableAttributes(typeof(T));
             string sqlIDs = string.Format("SELECT F.{7} FROM (SELECT TOP {0} ROW_NUMBER() OVER (ORDER BY {1}) ROWINDEX, {2} FROM {3} {4}) F WHERE F.ROWINDEX BETWEEN {5} AND {6}", pageNumber * pageSize, sqlOrderBy, sqlFields, sqlFrom, sqlWhere, (pageNumber - 1) * pageSize + 1, pageNumber * pageSize, t.Item3 + t.Item2);
             sqlStr.AppendFormat(GetReadString(string.Format("{0} IN({1})", t.Item3 + t.Item2, sqlIDs)));
 
