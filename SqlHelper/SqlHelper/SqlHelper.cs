@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                        case "Com.EnjoyCodes.SqlHelper":
-                        default: key = "MSSQLConnectionString"; break;
+                    case "Com.EnjoyCodes.SqlHelper":
+                    default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
