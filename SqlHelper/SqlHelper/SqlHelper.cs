@@ -89,8 +89,8 @@ namespace Com.EnjoyCodes.SqlHelper
                     string key = string.Empty;
                     switch (ns)
                     {
-                    case "Com.EnjoyCodes.SqlHelper":
-                    default: key = "MSSQLConnectionString"; break;
+                        case "Com.EnjoyCodes.SqlHelper":
+                        default: key = "MSSQLConnectionString"; break;
                     }
                     connectionStr = GetConnectionString(key);
                 }
@@ -352,7 +352,7 @@ namespace Com.EnjoyCodes.SqlHelper
         private static object convertObject(object obj, Type type)
         {
             if (type == null) return obj;
-            if (obj == null) return type.IsValueType ? Activator.CreateInstance(type) : null;
+            if (obj == null || string.IsNullOrEmpty(obj.ToString())) return type.IsValueType ? Activator.CreateInstance(type) : null;
 
             Type underlyingType = Nullable.GetUnderlyingType(type);
             if (type.IsAssignableFrom(obj.GetType()))
