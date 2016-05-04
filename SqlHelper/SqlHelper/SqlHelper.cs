@@ -338,8 +338,9 @@ namespace Com.EnjoyCodes.SqlHelper
         {
             string pk = dr["PK"].ToString();
 
-            T obj = objs.First(f => pkProperty.GetValue(f).ToString() == pk);
-            fill(obj, dr, fkProperties);
+            T obj = objs.FirstOrDefault(f => pkProperty.GetValue(f).ToString() == pk);
+            if (obj != null)
+                fill(obj, dr, fkProperties);
         }
 
         /// <summary>
