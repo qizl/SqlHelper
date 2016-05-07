@@ -71,3 +71,4 @@ packages
 /SqlHelper/Model/bin
 *.suo
 SqlHelper/.vs/SqlHelper/v15/.suo
+/SqlHelper/.vs
