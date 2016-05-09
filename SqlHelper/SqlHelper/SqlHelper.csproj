@@ -41,6 +41,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PropertyAccessor\Guard.cs" />
+    <Compile Include="PropertyAccessor\PropertyAccessor.cs" />
+    <Compile Include="PropertyAccessor\PropertyAccessorKey.cs" />
     <Compile Include="TableDAL.cs" />
     <Compile Include="Pager.cs" />
     <Compile Include="SqlHelper.cs" />
