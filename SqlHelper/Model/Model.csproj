@@ -40,6 +40,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DynamicMethod\DynamicMethod.cs" />
+    <Compile Include="DynamicMethod\IMemberAccessor.cs" />
     <Compile Include="FileTerm.cs" />
     <Compile Include="FileTermDetail.cs" />
     <Compile Include="Genre.cs" />

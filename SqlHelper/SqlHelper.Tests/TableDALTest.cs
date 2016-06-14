@@ -140,6 +140,16 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
         {
             var runTimes = 10;
             new TimeProfiler(() => this._fileDAL.GetPaging<FileTerm>(1, 100), "泛型动态生成函数调用").Run(runTimes);
+
+            //100
+            //直接调用运行用时：65.9563ms
+            //反射运行用时：2882.6376ms
+            //泛型动态生成函数调用运行用时：2784.5953ms
+
+            //1000
+            //直接调用运行用时：96.8786ms
+            //反射运行用时：28286.4882ms
+            //泛型动态生成函数调用运行用时：27492.4414ms
         }
 
         [TestMethod]
