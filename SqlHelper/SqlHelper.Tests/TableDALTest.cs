@@ -137,7 +137,10 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
 
         [TestMethod]
         public void GetPaging()
-        { var fileTerms = this._fileDAL.GetPaging<CTest>(3, 10); }
+        {
+            var runTimes = 10;
+            new TimeProfiler(() => this._fileDAL.GetPaging<FileTerm>(1, 100), "泛型动态生成函数调用").Run(runTimes);
+        }
 
         [TestMethod]
         public void ReadListT()

@@ -1,4 +1,5 @@
 ﻿using Com.EnjoyCodes.SqlAttribute;
+using Com.EnjoyCodes.SqlHelper.DynamicMethod;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -261,18 +262,18 @@ namespace Com.EnjoyCodes.SqlHelper
             {typeof(Enum),SqlDbType.Int}
         };
 
-        private static void fill(T obj, IDataReader dr, string columnPrefix, PropertyInfo[] properties)
+        private static void fill(T obj, DynamicMethod<T> dm, IDataReader dr, string columnPrefix, PropertyInfo[] properties)
         {
             foreach (var item in properties)
                 try
                 {
                     object v = dr[columnPrefix + item.Name];
                     //if (v != null) PropertyAccessor.Set(obj, item.Name, v);
-                    if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType));
+                    if (v != null) dm.SetValue(obj, item.Name, convertObject(v, item.PropertyType));
                 }
                 catch { }
         }
-        private static void fill(T obj, IDataReader dr, List<PropertyInfo> fkProperties)
+        private static void fill(T obj, DynamicMethod<T> dm, IDataReader dr, List<PropertyInfo> fkProperties)
         {
             string modelColumnName = dr.GetName(0).ToString();
             string modelName = dr["MODELNAME"].ToString();
@@ -295,6 +296,7 @@ namespace Com.EnjoyCodes.SqlHelper
 
             string columnPrefix = GetTableAttributes(type).Item3; // 获取关联表的字段前缀
             var detail = Assembly.GetAssembly(type).CreateInstance(fullName); // 创建关联表的空对象
+            var dmDetail = new DynamicMethod.DynamicMethod(detail);
             PropertyInfo tProperty = typeof(T).GetProperty(property.Name); // 获取关联表的属性
 
             if (tProperty.PropertyType.IsGenericType)
@@ -303,12 +305,12 @@ namespace Com.EnjoyCodes.SqlHelper
                  * 泛型
                  *  向泛型中添加新元素
                  */
-                var details = tProperty.GetValue(obj);
+                var details = dm.GetValue(obj, tProperty.Name); // tProperty.GetValue(obj);
                 if (details == null)
                 {
                     // 初始化泛型对象
                     details = Assembly.GetAssembly(tProperty.PropertyType).CreateInstance(tProperty.PropertyType.FullName);
-                    tProperty.SetValue(obj, details);
+                    dm.SetValue(obj, tProperty.Name, details); // tProperty.SetValue(obj, details);
                 }
 
                 // 添加新元素
@@ -321,7 +323,8 @@ namespace Com.EnjoyCodes.SqlHelper
                  * 非泛型
                  *  关联表赋值给主表
                  */
-                tProperty.SetValue(obj, detail);
+
+                dm.SetValue(obj, tProperty.Name, detail); // tProperty.SetValue(obj, detail);
             }
 
             // 反射取值
@@ -330,7 +333,7 @@ namespace Com.EnjoyCodes.SqlHelper
                 try
                 {
                     object v = dr[columnPrefix + item.Name];
-                    if (v != null) item.SetValue(detail, convertObject(v, item.PropertyType));
+                    if (v != null) dmDetail.SetValue(tProperty.Name, convertObject(v, item.PropertyType)); //item.SetValue(detail, convertObject(v, item.PropertyType));
                 }
                 catch { }
         }
@@ -340,7 +343,10 @@ namespace Com.EnjoyCodes.SqlHelper
 
             T obj = objs.FirstOrDefault(f => pkProperty.GetValue(f).ToString() == pk);
             if (obj != null)
-                fill(obj, dr, fkProperties);
+            {
+                var dm = new DynamicMethod<T>();
+                fill(obj, dm, dr, fkProperties);
+            }
         }
 
         /// <summary>
@@ -748,10 +754,11 @@ namespace Com.EnjoyCodes.SqlHelper
             // 读主表数据
             var result = new List<T>();
             PropertyInfo[] properties = typeof(T).GetProperties();
+            var dm = new DynamicMethod<T>();
             while (dr.Read())
             {
                 var obj = Activator.CreateInstance<T>();
-                fill(obj, dr, columnPrefix, properties);
+                fill(obj, dm, dr, columnPrefix, properties);
                 result.Add(obj);
             }
 
@@ -904,11 +911,12 @@ namespace Com.EnjoyCodes.SqlHelper
             PropertyInfo[] properties = typeof(T).GetProperties();
             List<PropertyInfo> propertyInfoes = new List<PropertyInfo>();
             List<object> values = new List<object>();
+            var dm = new DynamicMethod<T>();
             foreach (var item in properties)
             {
                 if (!item.PropertyType.IsSealed) continue;
 
-                object obj = item.GetValue(model);
+                object obj = dm.GetValue(model, item.Name); // item.GetValue(model);
                 if (obj != null)
                 {
                     propertyInfoes.Add(item);
