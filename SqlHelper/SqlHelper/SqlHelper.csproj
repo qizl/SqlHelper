@@ -41,8 +41,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DynamicMethod\DynamicMethod.cs" />
-    <Compile Include="DynamicMethod\IMemberAccessor.cs" />
     <Compile Include="TableDAL.cs" />
     <Compile Include="Pager.cs" />
     <Compile Include="SqlHelper.cs" />
