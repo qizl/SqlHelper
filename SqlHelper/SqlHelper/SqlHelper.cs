@@ -400,13 +400,14 @@ namespace Com.EnjoyCodes.SqlHelper
                 if (constructor != null)
                 {
                     object o = constructor.Invoke(null);
+                    var dmDetail = new DynamicMethod.DynamicMethod(o);
                     PropertyInfo[] propertys = type.GetProperties();
                     Type oldType = obj.GetType();
                     foreach (PropertyInfo property in propertys)
                     {
                         PropertyInfo p = oldType.GetProperty(property.Name);
                         if (property.CanWrite && p != null && p.CanRead)
-                            property.SetValue(o, convertObject(p.GetValue(obj, null), property.PropertyType), null);
+                            dmDetail.SetValue(property.Name, convertObject(p.GetValue(obj, null), property.PropertyType)); // property.SetValue(o, convertObject(p.GetValue(obj, null), property.PropertyType), null);
                     }
                     return o;
                 }
