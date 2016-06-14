@@ -760,11 +760,13 @@ namespace Com.EnjoyCodes.SqlHelper
              *  主表需指定外键
              */
             List<PropertyInfo> fkProperties = GetForeignKeyProperties(typeof(T));
-            PropertyInfo pkProperty = typeof(T).GetProperty(GetTableAttributes(typeof(T)).Item2);
             if (fkProperties.Count > 0)
+            {
+                PropertyInfo pkProperty = typeof(T).GetProperty(GetTableAttributes(typeof(T)).Item2);
                 while (dr.NextResult())
                     while (dr.Read())
                         fill(result, dr, pkProperty, fkProperties);
+            }
 
             return result;
         }
