@@ -261,13 +261,13 @@ namespace Com.EnjoyCodes.SqlHelper
             {typeof(Enum),SqlDbType.Int}
         };
 
-        private static void fill(T obj, IDataReader dr, string columnPrefix)
+        private static void fill(T obj, IDataReader dr, string columnPrefix, PropertyInfo[] properties)
         {
-            PropertyInfo[] properties = typeof(T).GetProperties();
             foreach (var item in properties)
                 try
                 {
                     object v = dr[columnPrefix + item.Name];
+                    //if (v != null) PropertyAccessor.Set(obj, item.Name, v);
                     if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType));
                 }
                 catch { }
@@ -747,10 +747,11 @@ namespace Com.EnjoyCodes.SqlHelper
         {
             // 读主表数据
             var result = new List<T>();
+            PropertyInfo[] properties = typeof(T).GetProperties();
             while (dr.Read())
             {
                 var obj = Activator.CreateInstance<T>();
-                fill(obj, dr, columnPrefix);
+                fill(obj, dr, columnPrefix, properties);
                 result.Add(obj);
             }
 
