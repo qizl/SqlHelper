@@ -65,10 +65,4 @@ packages
 *.suo
 *.dll
 *.pdb
-/SqlHelper/SqlHelper/bin
-/SqlHelper/SqlHelper/obj
-/SqlHelper/Model/obj
-/SqlHelper/Model/bin
 *.suo
-SqlHelper/.vs/SqlHelper/v15/.suo
-/SqlHelper/.vs
