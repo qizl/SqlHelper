@@ -537,7 +537,9 @@ namespace Com.EnjoyCodes.SqlHelper
         public static int CreateTable(string connectionString)
         {
             Tuple<string, string, string> t = GetTableAttributes(typeof(T));
-            return CreateTable(connectionString, t.Item1, t.Item2, t.Item3);
+            var tns = t.Item1.Split('.');
+            var tableName = tns.Length > 0 ? tns[tns.Length - 1] : t.Item1;
+            return CreateTable(connectionString, tableName, t.Item2, t.Item3);
         }
         public static int CreateTable(string connectionString, string modelTableName, string modelPrimaryKey, string columnPrefix)
         {
