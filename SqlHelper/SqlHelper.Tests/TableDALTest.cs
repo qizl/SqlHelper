@@ -41,6 +41,9 @@ namespace Com.EnjoyCodes.SqlHelper.Tests
             //this._fileDAL.CreateTable<FileTermDetail>();
             //this._fileDAL.CreateTable<TIdentity>();
             //this._fileDAL.CreateTable<CTest>();
+
+            //this._fileDAL.CreateTable<Student>();
+            //this._fileDAL.CreateTable<StudentDetails>();
         }
 
         [TestMethod]

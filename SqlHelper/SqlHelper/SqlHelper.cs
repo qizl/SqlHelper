@@ -98,8 +98,7 @@ namespace Com.EnjoyCodes.SqlHelper
             return connectionStr;
         }
 
-        public static string GetConnectionString(string key)
-        { return ConfigurationManager.AppSettings[key]; }
+        public static string GetConnectionString(string key) { return ConfigurationManager.AppSettings[key]; }
         #endregion
 
         #region ExecuteNonQuery
