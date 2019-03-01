@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Com.EnjoyCodes.SqlHelper
 {
@@ -18,7 +15,7 @@ namespace Com.EnjoyCodes.SqlHelper
         public int PageNumber { get; set; }
         /// <summary>
         /// 每页数据条数
-        /// </summary>
+        /// </summary>r
         public int PageSize { get; set; }
         /// <summary>
         /// 数据总条数

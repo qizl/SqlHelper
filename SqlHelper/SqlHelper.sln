@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28621.142
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlHelper", "SqlHelper\SqlHelper.csproj", "{8ED89855-B132-4C98-A829-5F90A70CD4D9}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlAttribute", "SqlAttribute\SqlAttribute.csproj", "{0E266D05-0A2E-4E81-927D-D5086AB4A7E5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReflectionTest", "ReflectionTest\ReflectionTest.csproj", "{FD90D4EF-73B5-4725-9395-480515969139}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0DC00DD6-63F0-4EA6-969B-27C8D319BAB8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,5 +44,12 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{016786E7-2A86-4C99-9A62-06A40AFEEFEC} = {0DC00DD6-63F0-4EA6-969B-27C8D319BAB8}
+		{FD90D4EF-73B5-4725-9395-480515969139} = {0DC00DD6-63F0-4EA6-969B-27C8D319BAB8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {53D9EFAE-E5D0-4B4B-8826-4D56FC6EA67A}
 	EndGlobalSection
 EndGlobal

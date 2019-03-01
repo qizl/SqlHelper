@@ -221,7 +221,7 @@ namespace Com.EnjoyCodes.SqlHelper
         public static object ExecuteScalar(SqlConnection connection, CommandType commandType, string commandText, params SqlParameter[] commandParameters)
         {
             SqlCommand cmd = new SqlCommand();
-            prepareCommand(cmd, connection, (SqlTransaction)null, commandType, commandText, commandParameters);
+            prepareCommand(cmd, connection, null, commandType, commandText, commandParameters);
 
             object retval = cmd.ExecuteScalar();
 
@@ -265,7 +265,7 @@ namespace Com.EnjoyCodes.SqlHelper
             foreach (var item in properties)
                 try
                 {
-                    object v = dr[columnPrefix + item.Name];
+                    var v = dr[columnPrefix + item.Name];
                     //if (v != null) PropertyAccessor.Set(obj, item.Name, v);
                     if (v != null) item.SetValue(obj, convertObject(v, item.PropertyType));
                 }
@@ -273,11 +273,11 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         private static void fill(T obj, IDataReader dr, List<PropertyInfo> fkProperties)
         {
-            string modelColumnName = dr.GetName(0).ToString();
-            string modelName = dr["MODELNAME"].ToString();
+            var modelColumnName = dr.GetName(0).ToString();
+            var modelName = dr["MODELNAME"].ToString();
 
             // 关联表赋值
-            PropertyInfo property = fkProperties.First(f => f.PropertyType.IsGenericType ? f.PropertyType.GenericTypeArguments[0].Name == modelName : f.PropertyType.Name == modelName);
+            var property = fkProperties.First(f => f.PropertyType.IsGenericType ? f.PropertyType.GenericTypeArguments[0].Name == modelName : f.PropertyType.Name == modelName);
             Type type = null;
             string fullName = string.Empty;
             if (property.PropertyType.IsGenericType)
@@ -292,9 +292,9 @@ namespace Com.EnjoyCodes.SqlHelper
                 fullName = property.PropertyType.FullName;
             }
 
-            string columnPrefix = GetTableAttributes(type).Item3; // 获取关联表的字段前缀
+            var columnPrefix = GetTableAttributes(type).Item3; // 获取关联表的字段前缀
             var detail = Assembly.GetAssembly(type).CreateInstance(fullName); // 创建关联表的空对象
-            PropertyInfo tProperty = typeof(T).GetProperty(property.Name); // 获取关联表的属性
+            var tProperty = typeof(T).GetProperty(property.Name); // 获取关联表的属性
 
             if (tProperty.PropertyType.IsGenericType)
             {
@@ -324,7 +324,7 @@ namespace Com.EnjoyCodes.SqlHelper
             }
 
             // 反射取值
-            PropertyInfo[] properties = type.GetProperties();
+            var properties = type.GetProperties();
             foreach (var item in properties)
                 try
                 {
@@ -335,7 +335,7 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         private static void fill(List<T> objs, IDataReader dr, PropertyInfo pkProperty, List<PropertyInfo> fkProperties)
         {
-            string pk = dr["PK"].ToString();
+            var pk = dr["PK"].ToString();
 
             T obj = objs.FirstOrDefault(f => pkProperty.GetValue(f).ToString() == pk);
             if (obj != null)
@@ -448,7 +448,7 @@ namespace Com.EnjoyCodes.SqlHelper
             if (string.IsNullOrEmpty(key))
                 throw new Exception("未指定主键！", new Exception("请指定主键KeyAttribute属性。"));
 
-            return Tuple.Create<string, string, string>(tableName, key, prefix);
+            return Tuple.Create(tableName, key, prefix);
         }
 
         /// <summary>
@@ -715,7 +715,7 @@ namespace Com.EnjoyCodes.SqlHelper
             List<T> result;
             using (SqlConnection cn = new SqlConnection(connectionString))
             {
-                SqlCommand cmd = cn.CreateCommand();
+                var cmd = cn.CreateCommand();
                 cmd.CommandText = commandText;
                 cmd.CommandType = commandType;
                 if (commandParameters != null)
@@ -746,7 +746,7 @@ namespace Com.EnjoyCodes.SqlHelper
         {
             // 读主表数据
             var result = new List<T>();
-            PropertyInfo[] properties = typeof(T).GetProperties();
+            var properties = typeof(T).GetProperties();
             while (dr.Read())
             {
                 var obj = Activator.CreateInstance<T>();
@@ -758,8 +758,8 @@ namespace Com.EnjoyCodes.SqlHelper
              * 读关联表数据
              *  主表需指定外键
              */
-            List<PropertyInfo> fkProperties = GetForeignKeyProperties(typeof(T));
-            PropertyInfo pkProperty = typeof(T).GetProperty(GetTableAttributes(typeof(T)).Item2);
+            var fkProperties = GetForeignKeyProperties(typeof(T));
+            var pkProperty = typeof(T).GetProperty(GetTableAttributes(typeof(T)).Item2);
             if (fkProperties.Count > 0)
                 while (dr.NextResult())
                     while (dr.Read())
@@ -841,10 +841,10 @@ namespace Com.EnjoyCodes.SqlHelper
         }
         public static Pager<T> ReadPaging(string connectionString, CommandType commandType, string commandText, string columnPrefix, params SqlParameter[] commandParameters)
         {
-            Pager<T> result = new Pager<T>();
+            var result = new Pager<T>();
             using (SqlConnection cn = new SqlConnection(connectionString))
             {
-                SqlCommand cmd = cn.CreateCommand();
+                var cmd = cn.CreateCommand();
                 cmd.CommandText = commandText;
                 cmd.CommandType = commandType;
                 if (commandParameters != null)
